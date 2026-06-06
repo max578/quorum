@@ -1,0 +1,48 @@
+
+<!-- README.md is generated from README.Rmd. Edit the .Rmd, not the .md. -->
+
+# flexyBayesOrchestra
+
+`flexyBayesOrchestra` is the orchestra-composition layer for
+[`flexyBayes`](https://github.com/max578/flexyBayes). The core
+`flexyBayes` package is a self-contained Bayesian mixed-model engine
+(ASReml / lme4 / brms grammar routed to greta, INLA, or brms, with
+cross-engine triangulation). `flexyBayesOrchestra` adds the pieces that
+only make sense inside the wider analytics constellation:
+
+- **Surrogate emulators** — cheap stand-ins for expensive fits
+  (`fit_surrogate()`, random-feature / Bayesian-linear emulators).
+- **Ensemble sources** — ingest, verify, and represent external
+  posterior ensembles (`fb_ensemble()`, `as_fb_ensemble()`,
+  `verify_fb_ensemble()`).
+- **Ensemble-derived priors** — turn an ensemble into a `flexyBayes`
+  prior (`fb_prior_from_ensemble()`, `fb_pesto()`).
+- **Surrogate posterior predictive checks** — MMD-based checks
+  (`fb_surrogate_ppc()`, `fb_surrogate_ies()`).
+- **Dormant cross-engine backend slots** — the koine fourth-opinion slot
+  and the gretaR engine, registered against the `flexyBayes` backend
+  registry.
+
+If you only need Bayesian mixed models, install `flexyBayes` alone.
+Install this package when you are composing `flexyBayes` with PESTO /
+kernR / the rest of the orchestra.
+
+## Installation
+
+``` r
+# installs flexyBayes (the core) and the orchestra optionals as needed
+pak::pak("max578/flexyBayesOrchestra")
+```
+
+## Relationship to flexyBayes
+
+    flexyBayes            (core: mixed models + triangulation; CRAN / rOpenSci)
+       ^
+       | Imports
+       |
+    flexyBayesOrchestra   (this package: surrogates, ensembles, derived priors;
+                           r-universe / orchestra-internal)
+
+## License
+
+GPL (\>= 3) — matching the `flexyBayes` core it imports.

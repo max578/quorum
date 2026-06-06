@@ -1,0 +1,27 @@
+{
+  "name": "flexyBayesOrchestra (R dev)",
+  "build": { "dockerfile": "Dockerfile" },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "REditorSupport.r",
+        "posit.air-vscode",
+        "GitHub.vscode-pull-request-github",
+        "quarto.quarto"
+      ],
+      "settings": {
+        "r.rterm.linux": "/usr/local/bin/R",
+        "r.lsp.enabled": true
+      }
+    }
+  },
+  "postCreateCommand": "Rscript -e 'if (file.exists(\"renv.lock\")) renv::restore() else pak::local_install_dev_deps()'",
+  "remoteUser": "rstudio",
+  "containerEnv": {
+    "R_LIBS_USER": "/workspaces/flexyBayesOrchestra/renv/library/R-4.4/x86_64-pc-linux-gnu"
+  }
+}

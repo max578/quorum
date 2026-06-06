@@ -1,0 +1,64 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+
+  - repo: https://github.com/posit-dev/air
+    rev: 0.5.0
+    hooks:
+      - id: air
+
+  - repo: https://github.com/lorenzwalthert/precommit
+    rev: v0.4.3
+    hooks:
+      - id: style-files
+      - id: lintr
+      - id: parsable-R
+      - id: no-browser-statement
+      - id: no-debug-statement
+      - id: readme-rmd-rendered
+      - id: spell-check
+      - id: deps-in-desc
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: r-style-sensitive-info-guard
+        name: Block maintainer-private patterns from package sources
+        description: >-
+          Per ~/.claude/rules/r_style.md I13: package sources must not embed
+          maintainer-private identifiers (institutional IDs, home-directory
+          paths, or working-notes filenames). ORCIDs and project-appropriate
+          emails are permitted in DESCRIPTION Authors@R and @author roxygen
+          tags only -- those locations are intentionally excluded by the
+          --include filter below.
+        entry: >-
+          bash -c '
+          set -e;
+          patterns="a1222[0-9]+|/Users/a1222812/|aa_notes|PROJECT_LOG|research_notes|implementation_plan_";
+          if grep -RInE
+            --include="*.R"
+            --include="*.Rmd"
+            --include="*.qmd"
+            --include="NEWS.md"
+            --include="README*.md"
+            --exclude-dir=revdep
+            --exclude-dir=.git
+            "$patterns" .;
+          then
+            echo "r-style-sensitive-info-guard: forbidden pattern matched -- see ~/.claude/rules/r_style.md sensitive-info hard rule" >&2;
+            exit 1;
+          fi'
+        language: system
+        pass_filenames: false

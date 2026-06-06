@@ -1,0 +1,9 @@
+# CODEOWNERS — auto-request reviews for PRs touching these paths.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+*                                       @max578
+/R/                                     @max578
+/src/                                   @max578 @max578
+/vignettes/                             @max578 @max578
+/.github/workflows/                     @max578
+/DESCRIPTION                            @max578

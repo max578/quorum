@@ -1,0 +1,13 @@
+linters: linters_with_defaults(
+    line_length_linter(80),
+    object_name_linter = NULL,         # snake_case verified manually; legacy ASReml tokens
+    cyclocomp_linter = NULL,           # heavy on surrogate / ensemble emit which are inherently long
+    indentation_linter = NULL,         # `air format` is the source of truth for indentation
+    object_length_linter = NULL,       # long descriptive domain names are intentional (cf. object_name_linter)
+    commented_code_linter = NULL       # high false-positive rate on dash-banner headers + name-mapping docs
+  )
+exclusions: list(
+    "tests/testthat/_snaps",
+    "vignettes",
+    "tests/testthat" = list(line_length_linter = Inf)  # tests carry long fixtures + expected strings
+  )

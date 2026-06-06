@@ -1,0 +1,26 @@
+---
+title: "Getting started with flexyBayesOrchestra"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with flexyBayesOrchestra}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(flexyBayesOrchestra)
+```
+
+This vignette is the documentation entry point for **flexyBayesOrchestra**. It is
+intentionally a build-clean stub at scaffold time: it loads the package and
+nothing more, so `R CMD check --as-cran` passes from day one. Replace this
+text with a real getting-started narrative as the package matures — see
+the `vignettes/` directory in `nasapower`, `dplyr`, or any rOpenSci package
+for examples of expanded vignettes.

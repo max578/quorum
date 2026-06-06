@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "flexyBayesOrchestra: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors"
+version: 0.0.0.9000
+date-released: 2026-06-06
+url: "https://github.com/max578/flexyBayesOrchestra"
+repository-code: "https://github.com/max578/flexyBayesOrchestra"
+license: GPL-3.0-or-later
+authors:
+  - family-names: Moldovan
+    given-names: Max
+    email: max.moldovan@gmail.com
+    orcid: "https://orcid.org/0000-0001-9680-8474"
+preferred-citation:
+  type: software
+  title: "flexyBayesOrchestra: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors"
+  authors:
+    - family-names: Moldovan
+      given-names: Max
+      orcid: "https://orcid.org/0000-0001-9680-8474"
+  year: 2026
+  url: "https://github.com/max578/flexyBayesOrchestra"
