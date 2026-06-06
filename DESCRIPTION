@@ -29,7 +29,8 @@ Suggests:
     gretaR (>= 0.4.0),
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 Remotes:
     max578/flexyBayes,
     max578/kernR,
