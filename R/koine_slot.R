@@ -19,18 +19,25 @@
 # clause 1 (the C1 conformance battery -- add a koine descriptor to
 # .conformance_backends() in tests/testthat/test-backend-conformance.R).
 #
-# Activation is a small deliberate edit, the gretaR flip in reverse-engineered
-# form: register koine's real emit + capability predicate, swap the mapper stub
-# below for the real mapper, replace the dispatch refusal branch
-# (R/dispatch.R) with a live emit branch, and move the registry entry
-# dormant -> active. The single source of truth for activation state is the
-# option `flexyBayes.koine_activated`, queried here only.
+# ACTIVATED 2026-06-08. The slot is live: `R/emit_koine.R` ports koine's real
+# emit + the capability gate and registers `fb_as_draws_simple` /
+# `canonical_names` S3 methods on flexyBayes core's exported generics, so core's
+# generic `triangulate()` consumes a `flexybayes_koine` fit as its fourth column
+# with no core edit (the lean-0.7.0 boundary holds). The single source of truth
+# for activation state is the option `flexyBayesOrchestra.koine_activated`
+# (default TRUE), queried here only.
 
-# Minimum koine version carrying a programmatic, re-entrant builder confirmed
-# against backend_contract.md clause 1 + the Stage-0 koine_pass/koine_result
-# contract. koine is 0.0.0.9000 today; this floor is the activation gate, not a
-# claim it is met.
-.KOINE_VERSION_FLOOR <- "0.1.0"
+# Minimum koine version carrying the programmatic, re-entrant builder
+# (koine_pass_from_design) + the Stage-0 koine_pass/koine_result contract +
+# the poisson (1 | g) corner. The Poisson corner landed at koine 0.2.0, so that
+# is the activation floor.
+.KOINE_VERSION_FLOOR <- "0.2.0"
+
+# TRUE when koine is installed at or above the activation floor.
+.koine_version_ok <- function() {
+  nzchar(system.file(package = "koine")) &&
+    utils::packageVersion("koine") >= .KOINE_VERSION_FLOOR
+}
 
 # ---------------------------------------------------------------- #
 # Activation state introspection                                    #
@@ -40,19 +47,20 @@
 # documented sentinels; consumed by the dispatch refusal, the canonical-name
 # mapper stub, and koine_status().
 .koine_dormancy_reason <- function() {
-  activated <- isTRUE(getOption("flexyBayes.koine_activated", FALSE))
-  installed <- nzchar(system.file(package = "koine"))
-  if (!installed) {
+  if (!nzchar(system.file(package = "koine"))) {
     return("koine_not_installed")
   }
+  if (!.koine_version_ok()) {
+    return("koine_below_floor")
+  }
+  activated <- isTRUE(getOption("flexyBayesOrchestra.koine_activated", TRUE))
   if (!activated) {
     return("slot_provisioned_not_activated")
   }
-  # Reachable only when the activation boolean is TRUE but no C1 clause-1
-  # confirmation mechanism has been wired yet (mirrors gretaR's pre-activation
-  # not_audit_clean state): the builder has not been confirmed against the
-  # conformance battery, so the slot stays dormant.
-  "koine_builder_unconfirmed"
+  # koine installed at/above the floor + the option on: the ported emit_koine()
+  # builder is confirmed against the koine_pass/koine_result contract, so the
+  # slot is fully active -- triangulate() consumes the fourth opinion.
+  "koine_dispatch_eligible"
 }
 
 # Capability flag appended by lgm_gate() to an LGM-compatible IR. Always the
@@ -71,18 +79,19 @@
 .koine_activation_procedure <- function() {
   c(
     paste0(
-      "Confirm koine's programmatic, re-entrant model builder against ",
-      "backend_contract.md clause 1 -- add a koine descriptor to ",
-      ".conformance_backends() in test-backend-conformance.R and pass clauses ",
-      "1-5."
-    ),
-    paste0(
       "Install the koine package (>= ",
       .KOINE_VERSION_FLOOR,
-      ", the version ",
-      "carrying that builder + the Stage-0 koine_pass/koine_result contract)."
+      ", carrying koine_pass_from_design + the Stage-0 ",
+      "koine_pass/koine_result contract + the poisson (1 | g) corner)."
     ),
-    "Run options(flexyBayes.koine_activated = TRUE) in the session."
+    paste0(
+      "Keep options(flexyBayesOrchestra.koine_activated = TRUE) (the default); ",
+      "set it FALSE to hold the slot dormant."
+    ),
+    paste0(
+      "Emit the fourth opinion with emit_koine(fit$fb, data) on a core fit and ",
+      "pass it to flexyBayes::triangulate(engine_fit, koine_fit)."
+    )
   )
 }
 
@@ -134,17 +143,18 @@
 #'
 #' @return A list with components:
 #'   \describe{
-#'     \item{`activated`}{Logical: `TRUE` only when
-#'       `options(flexyBayes.koine_activated)` is set AND a clause-1
-#'       confirmation mechanism has cleared. Currently always `FALSE`.}
+#'     \item{`activated`}{Logical: `TRUE` when koine is installed at or above the
+#'       activation floor and `options(flexyBayesOrchestra.koine_activated)` is
+#'       not set `FALSE` (the slot is live as of 2026-06-08).}
 #'     \item{`koine_installed`}{Logical: result of
 #'       `nzchar(system.file(package = "koine"))`.}
-#'     \item{`builder_confirmed`}{Logical or `NA`: whether koine's builder has
-#'       been confirmed against backend-contract clause 1. Currently always
-#'       `NA` (no confirmation mechanism shipped).}
+#'     \item{`builder_confirmed`}{Logical: whether koine's
+#'       `koine_pass_from_design` builder is installed at or above the floor (the
+#'       ported `emit_koine()` confirms it against the koine_pass/koine_result
+#'       contract).}
 #'     \item{`dormancy_reason`}{Character: one of
-#'       `"koine_not_installed"`, `"slot_provisioned_not_activated"`,
-#'       `"koine_builder_unconfirmed"`, or `"koine_dispatch_eligible"` (the
+#'       `"koine_not_installed"`, `"koine_below_floor"`,
+#'       `"slot_provisioned_not_activated"`, or `"koine_dispatch_eligible"` (the
 #'       last meaning the slot is fully active).}
 #'     \item{`activation_procedure`}{Character vector: numbered steps to
 #'       activate the slot, in order.}
@@ -152,9 +162,8 @@
 #'
 #' @examples
 #' ks <- koine_status()
-#' ks$activated         # FALSE
-#' ks$dormancy_reason   # "koine_not_installed" or
-#'                      # "slot_provisioned_not_activated"
+#' ks$activated         # TRUE when koine (>= 0.2.0) is installed
+#' ks$dormancy_reason   # "koine_dispatch_eligible" when active
 #' cat(ks$activation_procedure, sep = "\n")
 #'
 #' @seealso [gretaR_status()] for the engine-axis sibling slot.
@@ -166,7 +175,7 @@ koine_status <- function() {
   list(
     activated = fully_active,
     koine_installed = installed,
-    builder_confirmed = NA,
+    builder_confirmed = installed && .koine_version_ok(),
     dormancy_reason = reason,
     activation_procedure = .koine_activation_procedure()
   )

@@ -9,17 +9,18 @@ koine_status()
 \value{
 A list with components:
 \describe{
-\item{\code{activated}}{Logical: \code{TRUE} only when
-\code{options(flexyBayes.koine_activated)} is set AND a clause-1
-confirmation mechanism has cleared. Currently always \code{FALSE}.}
+\item{\code{activated}}{Logical: \code{TRUE} when koine is installed at or above the
+activation floor and \code{options(flexyBayesOrchestra.koine_activated)} is
+not set \code{FALSE} (the slot is live as of 2026-06-08).}
 \item{\code{koine_installed}}{Logical: result of
 \code{nzchar(system.file(package = "koine"))}.}
-\item{\code{builder_confirmed}}{Logical or \code{NA}: whether koine's builder has
-been confirmed against backend-contract clause 1. Currently always
-\code{NA} (no confirmation mechanism shipped).}
+\item{\code{builder_confirmed}}{Logical: whether koine's
+\code{koine_pass_from_design} builder is installed at or above the floor (the
+ported \code{emit_koine()} confirms it against the koine_pass/koine_result
+contract).}
 \item{\code{dormancy_reason}}{Character: one of
-\code{"koine_not_installed"}, \code{"slot_provisioned_not_activated"},
-\code{"koine_builder_unconfirmed"}, or \code{"koine_dispatch_eligible"} (the
+\code{"koine_not_installed"}, \code{"koine_below_floor"},
+\code{"slot_provisioned_not_activated"}, or \code{"koine_dispatch_eligible"} (the
 last meaning the slot is fully active).}
 \item{\code{activation_procedure}}{Character vector: numbered steps to
 activate the slot, in order.}
@@ -37,9 +38,8 @@ inspect why the slot is dormant and how to wake it.
 }
 \examples{
 ks <- koine_status()
-ks$activated         # FALSE
-ks$dormancy_reason   # "koine_not_installed" or
-                     # "slot_provisioned_not_activated"
+ks$activated         # TRUE when koine (>= 0.2.0) is installed
+ks$dormancy_reason   # "koine_dispatch_eligible" when active
 cat(ks$activation_procedure, sep = "\n")
 
 }
