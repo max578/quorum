@@ -1,5 +1,17 @@
 # flexyBayesOrchestra 0.0.0.9000
 
+* **koine genomic fourth opinion (`koine_genomic_lens()`).** The koine
+  fourth opinion, specialised for genomics: it runs the established REML
+  genomic BLUP (via \pkg{sommer}) on the same data and emits a genomic
+  *lens* that `flexyBayes::triangulate_genomic()` (>= 0.8.0) consumes as a
+  fourth column. In genomics the orchestra's value is not replacing the
+  decades of established REML / field-standard tools but catching
+  divergence -- "our Bayesian GEBVs disagree with sommer's REML --
+  investigate." The lens contract keeps flexyBayes core lean: core never
+  depends on the field tools; the companion produces the lens and core
+  compares it. `sommer` is a Suggests-only oracle (never on a fit path).
+  GEMMA / rrBLUP (GWAS) and BGLR (Bayesian marker) lenses are the same
+  pattern, planned.
 * **koine fourth-opinion backend activated (2026-06-08).** `emit_koine()` ports
   koine's real opinion synthesis (`koine::koine_pass_from_design()` ->
   `koine::synthesise()` -> `koine::koine_opinion_draws()`) and returns a
