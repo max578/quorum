@@ -39,3 +39,4 @@
 ^dev-narrative/.*$
 ^_book$
 ^vignettes/_book$
+^CONSTELLATION_MEMBER\.md$
