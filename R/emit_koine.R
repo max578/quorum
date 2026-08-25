@@ -19,6 +19,8 @@
 # a single random intercept (1 | g) for gaussian / binomial / poisson; the
 # capability gate below refuses the rest before any koine call.
 
+# ---- the headline verb: emit the koine fourth opinion -----------------------
+
 #' Emit a koine fourth-opinion fit for triangulation
 #'
 #' Activates the koine lens-axis backend from the companion. Given a flexyBayes
@@ -166,6 +168,8 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
   draws
 }
 
+# ---- triangulate-seam S3 methods on flexyBayes core generics ----------------
+
 #' Extract simple draws from a koine fit (triangulate seam)
 #'
 #' S3 method on flexyBayes's exported `fb_as_draws_simple()` generic. Returns a
@@ -207,6 +211,8 @@ fb_as_draws_simple.flexybayes_koine <- function(fit, n_samples = 1000L, ...) {
 canonical_names.flexybayes_koine <- function(fit, drop = FALSE, ...) {
   list(map = character(0), transform = list(), source = "self_naming")
 }
+
+# ---- summary + display methods ----------------------------------------------
 
 #' Posterior-mean coefficients for a koine fit
 #'

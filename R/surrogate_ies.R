@@ -17,6 +17,8 @@
 # standalone-functional for surrogate-accelerated inversion (invariant 1).
 # =============================================================================
 
+# ---- linear-algebra helpers: jittered solve + Woodbury low-rank gain --------
+
 .safe_solve <- function(m) {
   d <- nrow(m)
   scale_jit <- mean(diag(m))
@@ -53,6 +55,8 @@
   ctg_rinv_l <- ctg_rinv %*% lmat # p x r
   ctg_rinv - (ctg_rinv_l %*% innerinv) %*% t(l_rinv) # p x d
 }
+
+# ---- the headline verb: surrogate-accelerated ES-MDA inversion --------------
 
 #' Surrogate-accelerated ensemble inversion (ES-MDA)
 #'
@@ -320,6 +324,8 @@ fb_surrogate_ies <- function(
     class = c("fb_surrogate_ies", "list")
   )
 }
+
+# ---- display ----------------------------------------------------------------
 
 #' @export
 print.fb_surrogate_ies <- function(x, ...) {

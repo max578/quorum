@@ -22,6 +22,8 @@
 # internals" rule again. Requires kernR; without it, the check refuses cleanly.
 # =============================================================================
 
+# ---- predictive-draw + whitening + aggregated-MMD helpers -------------------
+
 # Cholesky factor of a covariance slice, with a graduated diagonal jitter on
 # failure (a near-singular predictive covariance can arise when two outputs are
 # almost perfectly correlated). Like .safe_solve() in surrogate_ies.R. Returns
@@ -148,7 +150,7 @@
 # footing.
 # A graduated relative
 # ridge guards a near-singular pooled covariance (highly collinear outputs).
-# Returns the whitened (draws, observed) as plain numeric matrices.
+# The whitened (draws, observed) come back as plain numeric matrices.
 .whiten_clouds <- function(draws, obs_mat) {
   z <- rbind(draws, obs_mat)
   mu <- colMeans(z)
@@ -305,6 +307,8 @@ print.fb_mmd_agg <- function(x, ...) {
   cat("------------------------------------------------------------\n")
   invisible(x)
 }
+
+# ---- the headline verb: surrogate posterior predictive check ----------------
 
 #' Posterior-predictive check of a surrogate against held-out outputs
 #'

@@ -100,8 +100,8 @@
 # Canonical-name mapper stub                                        #
 # ---------------------------------------------------------------- #
 # Registered into .canonical_mappers under the key "koine" at package load.
-# Returns the scaffold-dormant sentinel so triangulate() short-circuits cleanly
-# against a (currently impossible) koine fit.
+# Hands back the scaffold-dormant sentinel so triangulate() short-circuits
+# cleanly against a (currently impossible) koine fit.
 
 .mapper_koine_stub <- function(fit, fb_terms) {
   list(
