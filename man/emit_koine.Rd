@@ -35,18 +35,25 @@ a \code{flexybayes_koine} object that \code{\link[flexyBayes:triangulate]{flexyB
 alongside an engine-axis fit (greta / INLA / brms / gretaR).
 }
 \details{
-koine's corner is a population GLM with at most a single random intercept
-\code{(1 | g)} for the gaussian, binomial, and poisson families. Outside that
-corner -- or whenever koine's own convergence gate fires -- the returned
-object carries \code{status = "abstained"}, the honest fourth column. The
-synthesised opinion is a stacking mixture over koine's battery, an independent
-witness on the orthogonal lens axis, never a pool across the engine-axis
-backends.
+koine's corner is a population GLM for the gaussian, binomial, and poisson
+families, with either a single random intercept \code{(1 | g)} or -- from koine
+0.3.0 -- the breeder-standard multi-environment-trial structure of two
+crossed or nested random intercepts, \code{(1 | variety) + (1 | trial)}. A single
+grouping is routed through \code{koine_pass_from_design(group = )}; two groupings
+are routed through \code{koine_pass_from_design(groups = )}, koine's crossed /
+nested entry, and whether they are crossed or nested is resolved by koine
+from the data. Outside that corner -- more than two groupings, a random
+slope, a correlated random structure, koine below 0.3.0 on a two-grouping
+model -- or whenever koine's own convergence gate fires, the returned object
+carries \code{status = "abstained"}, the honest fourth column. The synthesised
+opinion is a stacking mixture over koine's battery, an independent witness on
+the orthogonal lens axis, never a pool across the engine-axis backends.
 
 Activation is gated by \code{\link[=koine_status]{koine_status()}}: koine installed at or above
 \verb{0.2.0} and \code{options(flexyBayesOrchestra.koine_activated = TRUE)} (the
 default). The draws are canonicalised to flexyBayes's parameter tokens, so the
-fit is self-naming and needs no \code{name_map} at the triangulate seam.
+fit is self-naming and needs no \code{name_map} at the triangulate seam: the group
+SDs koine reports as \code{tau} / \verb{tau_<grouping>} become \verb{sd_<grouping>}.
 }
 \seealso{
 \code{\link[=koine_status]{koine_status()}} for the activation state; \code{\link[flexyBayes:triangulate]{flexyBayes::triangulate()}}

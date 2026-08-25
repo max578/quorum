@@ -13,7 +13,10 @@
 #     conditional *mean* (a linear smoother y_hat(x*) = w(x*)' y), but no
 #     predictive variance. The conformer supplies the standard linear-smoother
 #     predictive variance sigma^2 (1 + ||w(x*)||^2) -- honest UQ on top of
-#     kernR's mean, not a reimplementation of the embedding.
+#     kernR's mean, not a reimplementation of the embedding -- and gates that
+#     variance on the smoother's weight mass, because the variance formula is
+#     only meaningful where the smoother actually carries weight (see the
+#     out-of-support gate below).
 #
 # Both adapters are requireNamespace-gated: flexyBayes stays standalone (the
 # `rff` reference needs no sibling). The registration helpers below are also
@@ -104,10 +107,74 @@ register_pesto_surrogates <- function() {
 
 # ---- kernR CME conformer -----------------------------------------------------
 
-.fit_kernr_cme <- function(x, y, ...) {
+# Default safety factor on the out-of-support gate: a prediction point must
+# carry at least this fraction of the LEAST-supported design point's smoother
+# weight mass. See .fit_kernr_cme() for the derivation and the reasoning.
+.CME_WEIGHT_MASS_FRAC <- 0.5
+
+# Mint the typed out-of-support abstention. The class ends in `_abstention`, so
+# the constellation's shared decline predicate
+# (ORCHESTRA_dev/integration/refusal_contract.R, `is_orchestra_decline()`)
+# recognises it without depending on this package's namespace.
+.cme_out_of_support <- function(rows, mass, floor_value, design_range) {
+  n_bad <- length(rows)
+  msg <- paste0(
+    "the 'cme' surrogate declines to predict at ",
+    n_bad,
+    " of the supplied point(s): the conditional-mean smoother carries a ",
+    "weight mass of ",
+    format(signif(min(mass[rows]), 3)),
+    " there (row ",
+    rows[which.min(mass[rows])],
+    "), below the out-of-support floor ",
+    format(signif(floor_value, 3)),
+    ". On the training design the mass runs ",
+    format(signif(design_range[1L], 4)),
+    " to ",
+    format(signif(design_range[2L], 4)),
+    "; as a point leaves the design the kernel evaluations decay to zero, the ",
+    "smoother mean collapses toward zero and the linear-smoother variance ",
+    "sigma^2 (1 + ||w||^2) collapses to its in-design floor -- a confident ",
+    "wrong answer. Emulate this region with fit_surrogate(method = \"rff\"), ",
+    "which widens honestly off-design, keep the prediction inside the ",
+    "design, or lower `weight_mass_floor` deliberately."
+  )
+  cond <- structure(
+    class = c(
+      "fb_surrogate_cme_abstention",
+      "fb_surrogate_abstention",
+      "error",
+      "condition"
+    ),
+    list(
+      message = msg,
+      call = NULL,
+      rows = rows,
+      weight_mass = mass[rows],
+      weight_mass_floor = floor_value,
+      mass_design_range = design_range
+    )
+  )
+  stop(cond)
+}
+
+.fit_kernr_cme <- function(x, y, weight_mass_frac = .CME_WEIGHT_MASS_FRAC,
+                           weight_mass_floor = NULL, ...) {
   if (!requireNamespace("kernR", quietly = TRUE)) {
     stop(
       "the 'cme' surrogate needs the 'kernR' package (not installed).",
+      call. = FALSE
+    )
+  }
+  if (
+    !is.numeric(weight_mass_frac) ||
+      length(weight_mass_frac) != 1L ||
+      !is.finite(weight_mass_frac) ||
+      weight_mass_frac < 0
+  ) {
+    stop(
+      "fit_surrogate(method = \"cme\"): `weight_mass_frac` must be a single ",
+      "non-negative number.",
       call. = FALSE
     )
   }
@@ -117,8 +184,8 @@ register_pesto_surrogates <- function() {
   # In-sample linear-smoother matrix S = K_xx W = predict(fit, x_train); the
   # CME prediction y_hat(x*) = w(x*)' y is a linear smoother, so its residual
   # noise variance is RSS / (n - tr(S)) and the predictive variance of a NEW
-  # observation is sigma^2 (1 + ||w(x*)||^2). This is the honest UQ the C7
-  # contract requires; kernR owns the mean, the adapter owns only the spread.
+  # observation is sigma^2 (1 + ||w(x*)||^2). kernR owns the mean, the adapter
+  # owns only the spread.
   s_mat <- stats::predict(fit, x)
   edf <- sum(diag(s_mat))
   resid <- y - s_mat %*% y
@@ -126,11 +193,33 @@ register_pesto_surrogates <- function() {
   denom <- max(n - edf, 1)
   sigma2 <- colSums(resid^2) / denom
   sigma2[!is.finite(sigma2) | sigma2 < 0] <- NA_real_
+  # Out-of-support gate. The smoother weights w(x*) are an approximate
+  # partition of unity wherever the embedding of x* lies in the span of the
+  # design embeddings: sum(w) is ~1 across the training design (the range is
+  # recorded below). With a bounded, decaying kernel every k(x*, x_i) tends to
+  # zero as x* leaves the design, so sum(w(x*)) -> 0, the mean w(x*)'y -> 0 and
+  # ||w(x*)||^2 -> 0, which drives the reported sd to its in-design floor
+  # sqrt(sigma^2). That is the failure mode the C7 contract exists to catch, so
+  # the mass is gated rather than trusted. The floor is derived from the design
+  # itself -- a fraction of the least-supported design point's mass -- so it
+  # calibrates to the fitted ridge instead of assuming one.
+  mass_design <- rowSums(s_mat)
+  mass_design <- mass_design[is.finite(mass_design)]
+  design_min <- if (length(mass_design)) min(mass_design) else NA_real_
+  floor_value <- weight_mass_floor %||%
+    (weight_mass_frac * if (is.finite(design_min)) design_min else 1)
   structure(
     list(
       cme = fit,
       y_train = y,
       sigma2 = sigma2,
+      weight_mass_floor = floor_value,
+      weight_mass_frac = weight_mass_frac,
+      mass_design_range = if (length(mass_design)) {
+        range(mass_design)
+      } else {
+        c(NA_real_, NA_real_)
+      },
       output_names = colnames(y)
     ),
     class = "fb_surrogate_kernr_cme"
@@ -138,8 +227,17 @@ register_pesto_surrogates <- function() {
 }
 
 #' @export
-predict.fb_surrogate_kernr_cme <- function(object, newdata, ...) {
+predict.fb_surrogate_kernr_cme <- function(object, newdata,
+                                           weight_mass_floor = NULL, ...) {
+  floor_value <- weight_mass_floor %||% object$weight_mass_floor
   w <- stats::predict(object$cme, as.matrix(newdata)) # n_new x n_train weights
+  mass <- rowSums(w) # smoother weight mass per row
+  if (is.finite(floor_value)) {
+    bad <- which(!is.finite(mass) | mass < floor_value)
+    if (length(bad) > 0L) {
+      .cme_out_of_support(bad, mass, floor_value, object$mass_design_range)
+    }
+  }
   mean_mat <- w %*% object$y_train # n_new x d_y
   wnorm2 <- rowSums(w^2) # smoother weight energy per row
   sd_mat <- matrix(NA_real_, nrow(mean_mat), ncol(mean_mat))
@@ -160,11 +258,49 @@ predict.fb_surrogate_kernr_cme <- function(object, newdata, ...) {
 #' `<o>_sd` requirement. The conditional-mean map stays kernR's; only the
 #' uncertainty quantification is added here -- not a reimplementation.
 #'
+#' @section Out-of-support gate:
+#' The smoother weights `w(x*)` are an approximate partition of unity wherever
+#' `x*` is supported by the design: `sum(w)` is close to 1 across the training
+#' design. With a bounded, decaying kernel every `k(x*, x_i)` tends to zero as
+#' `x*` leaves the design, so `sum(w(x*))` tends to 0, the mean `w(x*)'y` decays
+#' to zero, and `||w(x*)||^2` decays to zero -- which drives the reported sd
+#' *down* to its in-design floor `sqrt(sigma^2)`. Ungated, the conformer would
+#' report an in-design-sized uncertainty on a fabricated mean at exactly the
+#' point where it knows least.
+#'
+#' The conformer therefore records the weight mass across the training design at
+#' fit time and refuses to predict where the mass falls below
+#' `weight_mass_frac` (default 0.5) times the least-supported design point's
+#' mass, raising a classed `fb_surrogate_cme_abstention` condition that names
+#' the offending rows, their mass, and the floor. Pass `weight_mass_frac` (or an
+#' absolute `weight_mass_floor`) through [fit_surrogate()] to retune it, or
+#' `weight_mass_floor` to `predict()` to override it for one call; set the floor
+#' to 0 to disable the gate. The reference `rff` surrogate widens honestly
+#' off-design and is the named fallback for extrapolation.
+#'
 #' Called opportunistically from `.onLoad()` when kernR is installed.
 #'
 #' @return Invisibly, the registered method name (`"cme"`).
 #' @seealso [register_surrogate()], [fit_surrogate()],
 #'   [register_pesto_surrogates()].
+#' @examples
+#' if (requireNamespace("kernR", quietly = TRUE)) {
+#'   register_kernr_surrogates()
+#'   set.seed(1)
+#'   a <- runif(80, -2, 2)
+#'   e <- fb_ensemble(
+#'     params = data.frame(a = a),
+#'     outputs = data.frame(y = sin(a) + rnorm(80, 0, 0.05)),
+#'     provenance = list(source = "raw")
+#'   )
+#'   s <- fit_surrogate(e, method = "cme", lambda = 1e-2)
+#'   predict(s, data.frame(a = 0.5))
+#'   # far outside the design the conformer declines rather than guessing:
+#'   tryCatch(
+#'     predict(s, data.frame(a = 40)),
+#'     fb_surrogate_cme_abstention = function(cnd) conditionMessage(cnd)
+#'   )
+#' }
 #' @export
 register_kernr_surrogates <- function() {
   if (!requireNamespace("kernR", quietly = TRUE)) {

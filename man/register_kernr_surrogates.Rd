@@ -19,8 +19,48 @@ in-sample smoother), so the emulator honours the C7 distribution-preserving
 \verb{<o>_sd} requirement. The conditional-mean map stays kernR's; only the
 uncertainty quantification is added here -- not a reimplementation.
 }
-\details{
+\section{Out-of-support gate}{
+
+The smoother weights \verb{w(x*)} are an approximate partition of unity wherever
+\verb{x*} is supported by the design: \code{sum(w)} is close to 1 across the training
+design. With a bounded, decaying kernel every \verb{k(x*, x_i)} tends to zero as
+\verb{x*} leaves the design, so \verb{sum(w(x*))} tends to 0, the mean \verb{w(x*)'y} decays
+to zero, and \verb{||w(x*)||^2} decays to zero -- which drives the reported sd
+\emph{down} to its in-design floor \code{sqrt(sigma^2)}. Ungated, the conformer would
+report an in-design-sized uncertainty on a fabricated mean at exactly the
+point where it knows least.
+
+The conformer therefore records the weight mass across the training design at
+fit time and refuses to predict where the mass falls below
+\code{weight_mass_frac} (default 0.5) times the least-supported design point's
+mass, raising a classed \code{fb_surrogate_cme_abstention} condition that names
+the offending rows, their mass, and the floor. Pass \code{weight_mass_frac} (or an
+absolute \code{weight_mass_floor}) through \code{\link[=fit_surrogate]{fit_surrogate()}} to retune it, or
+\code{weight_mass_floor} to \code{predict()} to override it for one call; set the floor
+to 0 to disable the gate. The reference \code{rff} surrogate widens honestly
+off-design and is the named fallback for extrapolation.
+
 Called opportunistically from \code{.onLoad()} when kernR is installed.
+}
+
+\examples{
+if (requireNamespace("kernR", quietly = TRUE)) {
+  register_kernr_surrogates()
+  set.seed(1)
+  a <- runif(80, -2, 2)
+  e <- fb_ensemble(
+    params = data.frame(a = a),
+    outputs = data.frame(y = sin(a) + rnorm(80, 0, 0.05)),
+    provenance = list(source = "raw")
+  )
+  s <- fit_surrogate(e, method = "cme", lambda = 1e-2)
+  predict(s, data.frame(a = 0.5))
+  # far outside the design the conformer declines rather than guessing:
+  tryCatch(
+    predict(s, data.frame(a = 40)),
+    fb_surrogate_cme_abstention = function(cnd) conditionMessage(cnd)
+  )
+}
 }
 \seealso{
 \code{\link[=register_surrogate]{register_surrogate()}}, \code{\link[=fit_surrogate]{fit_surrogate()}},

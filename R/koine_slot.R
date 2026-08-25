@@ -39,6 +39,19 @@
     utils::packageVersion("koine") >= .KOINE_VERSION_FLOOR
 }
 
+# Minimum koine version carrying the crossed / nested two-grouping (MET) entry
+# -- the `groups` argument of koine_pass_from_design() and the `met` feature
+# flag on the glmm_marginal / nimble_glmm lenses. The slot itself activates from
+# .KOINE_VERSION_FLOOR (the single-intercept corner); a multi-environment model
+# needs this higher floor, and emit_koine() abstains typedly below it.
+.KOINE_MET_VERSION_FLOOR <- "0.3.0"
+
+# TRUE when the installed koine carries the two-grouping MET entry.
+.koine_met_version_ok <- function() {
+  nzchar(system.file(package = "koine")) &&
+    utils::packageVersion("koine") >= .KOINE_MET_VERSION_FLOOR
+}
+
 # ---------------------------------------------------------------- #
 # Activation state introspection                                    #
 # ---------------------------------------------------------------- #

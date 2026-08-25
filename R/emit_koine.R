@@ -15,9 +15,40 @@
 # independent witness on the lens axis, never a pool across the engine-axis
 # backends; C3 + koine charter), and returns it as a draws-bearing
 # `flexybayes_koine` object -- or an honest abstained object (the "fourth column
-# = abstained" when koine cannot add diversity). koine fields a population GLM +
-# a single random intercept (1 | g) for gaussian / binomial / poisson; the
-# capability gate below refuses the rest before any koine call.
+# = abstained" when koine cannot add diversity).
+#
+# koine's corner widened at 0.3.0: as well as a population GLM and a single
+# random intercept (1 | g), it fields the breeder-standard multi-environment
+# trial (MET) structure of TWO crossed or nested random intercepts,
+# (1 | variety) + (1 | trial), through the `groups` argument of
+# koine_pass_from_design() (probed on the installed namespace, not assumed).
+# Routing the MET case through `groups` is what stops the fourth opinion
+# abstaining on every multi-environment model. Richer random structure -- random
+# slopes, correlated effects, more than two groupings -- is still outside the
+# corner, and the capability gate below refuses it before any koine call.
+
+# ---- capability constants + the typed abstained object ----------------------
+
+# koine's random-effects corner: at most two groupings (a single random
+# intercept, or the crossed / nested MET pair), each a plain intercept. The
+# accepted `fb_terms` type tokens for "a plain random intercept".
+.KOINE_MAX_GROUPINGS <- 2L
+.KOINE_INTERCEPT_TYPES <- c("simple", "ide", "id", "iid", "intercept")
+
+# Mint the honest fourth column: a typed `flexybayes_koine` carrying koine's own
+# abstention out of koine's corner, never a silently wrong opinion.
+.koine_abstained <- function(fb, data, the_call, reason, detail) {
+  structure(
+    list(
+      koine = koine::abstention(reason, scope = "synthesis", detail = detail),
+      draws = NULL, koine_draws = NULL, fb = fb, data = data,
+      status = "abstained",
+      extras = list(status = "abstained", reason = reason, detail = detail,
+                    the_call = the_call)
+    ),
+    class = c("flexybayes_koine", "list")
+  )
+}
 
 # ---- the headline verb: emit the koine fourth opinion -----------------------
 
@@ -29,18 +60,25 @@
 #' a `flexybayes_koine` object that [flexyBayes::triangulate()] consumes
 #' alongside an engine-axis fit (greta / INLA / brms / gretaR).
 #'
-#' koine's corner is a population GLM with at most a single random intercept
-#' `(1 | g)` for the gaussian, binomial, and poisson families. Outside that
-#' corner -- or whenever koine's own convergence gate fires -- the returned
-#' object carries `status = "abstained"`, the honest fourth column. The
-#' synthesised opinion is a stacking mixture over koine's battery, an independent
-#' witness on the orthogonal lens axis, never a pool across the engine-axis
-#' backends.
+#' koine's corner is a population GLM for the gaussian, binomial, and poisson
+#' families, with either a single random intercept `(1 | g)` or -- from koine
+#' 0.3.0 -- the breeder-standard multi-environment-trial structure of two
+#' crossed or nested random intercepts, `(1 | variety) + (1 | trial)`. A single
+#' grouping is routed through `koine_pass_from_design(group = )`; two groupings
+#' are routed through `koine_pass_from_design(groups = )`, koine's crossed /
+#' nested entry, and whether they are crossed or nested is resolved by koine
+#' from the data. Outside that corner -- more than two groupings, a random
+#' slope, a correlated random structure, koine below 0.3.0 on a two-grouping
+#' model -- or whenever koine's own convergence gate fires, the returned object
+#' carries `status = "abstained"`, the honest fourth column. The synthesised
+#' opinion is a stacking mixture over koine's battery, an independent witness on
+#' the orthogonal lens axis, never a pool across the engine-axis backends.
 #'
 #' Activation is gated by [koine_status()]: koine installed at or above
 #' `0.2.0` and `options(flexyBayesOrchestra.koine_activated = TRUE)` (the
 #' default). The draws are canonicalised to flexyBayes's parameter tokens, so the
-#' fit is self-naming and needs no `name_map` at the triangulate seam.
+#' fit is self-naming and needs no `name_map` at the triangulate seam: the group
+#' SDs koine reports as `tau` / `tau_<grouping>` become `sd_<grouping>`.
 #'
 #' @param fb An `fb_terms` object (the `$fb` element of a core flexyBayes fit).
 #' @param data The model frame the fit was built on.
@@ -70,24 +108,33 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
          call. = FALSE)
   }
 
-  # Capability gate -- koine fields a population GLM + at most a single random
-  # intercept (1 | g). A richer random structure is out of corner; abstain
+  # Capability gate -- koine fields a population GLM with either a single random
+  # intercept (1 | g) or, from 0.3.0, the MET structure of two crossed / nested
+  # random intercepts. A richer random structure is out of corner; abstain
   # honestly before any koine call (never a silent wrong fourth opinion).
-  re_ok <- length(fb$random_terms) <= 1L &&
-    (length(fb$random_terms) == 0L ||
-       isTRUE(fb$random_terms[[1L]]$type %in%
-                c("simple", "ide", "id", "iid", "intercept")))
+  n_re <- length(fb$random_terms)
+  re_ok <- n_re <= .KOINE_MAX_GROUPINGS &&
+    (n_re == 0L ||
+       all(vapply(fb$random_terms, function(t) {
+         isTRUE(t$type %in% .KOINE_INTERCEPT_TYPES)
+       }, logical(1L))))
   if (!re_ok) {
-    return(structure(list(
-      koine = koine::abstention(
-        "feature_unsupported", scope = "synthesis",
-        detail = "koine fields a single random intercept (1 | g) only."),
-      draws = NULL, koine_draws = NULL, fb = fb, data = data,
-      status = "abstained",
-      extras = list(status = "abstained", reason = "feature_unsupported",
-                    detail = "random structure beyond (1 | g)",
-                    the_call = the_call)),
-      class = c("flexybayes_koine", "list")))
+    return(.koine_abstained(
+      fb, data, the_call, "feature_unsupported",
+      paste0("koine fields at most two crossed or nested random intercepts; ",
+             "this model carries ", n_re, " random term(s), not all of them ",
+             "plain intercepts.")))
+  }
+  # The MET (two-grouping) entry is koine 0.3.0's `groups` argument. Below that
+  # floor koine has only the single-`group` entry, so a MET is genuinely out of
+  # the installed member's corner -- say so rather than silently fitting one
+  # grouping and calling it the fourth opinion.
+  if (n_re > 1L && !.koine_met_version_ok()) {
+    return(.koine_abstained(
+      fb, data, the_call, "feature_unsupported",
+      paste0("the two-grouping (MET) entry needs koine (>= ",
+             .KOINE_MET_VERSION_FLOOR, "); installed koine is ",
+             as.character(utils::packageVersion("koine")), ".")))
   }
 
   # IR -> koine design arrays. The fixed part is rebuilt from fb's fixed terms;
@@ -103,8 +150,16 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
   }
   x <- stats::model.matrix(ff, stats::model.frame(ff, data))
   y <- data[[fb$response]]
-  group <- if (length(fb$random_terms)) {
-    factor(data[[fb$random_terms[[1L]]$var]])
+  grp_vars <- vapply(fb$random_terms, function(t) t$var, character(1L))
+  # One grouping -> koine's `group`; two -> koine's `groups` (the crossed /
+  # nested MET entry, koine >= 0.3.0). The two arguments are mutually exclusive
+  # in koine, so exactly one is supplied.
+  group <- if (length(grp_vars) == 1L) factor(data[[grp_vars]]) else NULL
+  groups <- if (length(grp_vars) == 2L) {
+    stats::setNames(
+      lapply(grp_vars, function(v) factor(data[[v]])),
+      grp_vars
+    )
   } else {
     NULL
   }
@@ -116,16 +171,32 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
   t0 <- proc.time()
   set.seed(seed)
   pass <- koine::koine_pass_from_design(x, y, fb$family, group = group,
-                                        seed = seed)
+                                        groups = groups, seed = seed)
   res <- koine::synthesise(pass, keep_fits = TRUE)
   elapsed <- unname((proc.time() - t0)["elapsed"])
+
+  # The resolved model shape, recorded on BOTH exits: a reader (and the study
+  # harness) must be able to see which koine entry the model was routed
+  # through even when koine's own convergence gate then declined it.
+  model_info <- list(
+    n_obs = nrow(data), n_fixed = ncol(x), groupings = grp_vars,
+    re_structure = if (length(grp_vars) == 2L) {
+      "met"
+    } else if (length(grp_vars) == 1L) {
+      "single_intercept"
+    } else {
+      "population"
+    },
+    family = fb$family, link = fb$link
+  )
 
   if (koine::is_abstention(res)) {
     return(structure(list(
       koine = res, draws = NULL, koine_draws = NULL, fb = fb, data = data,
       status = "abstained",
       extras = list(status = "abstained", reason = res$reason,
-                    detail = res$detail, run_time = elapsed,
+                    detail = res$detail, model_info = model_info,
+                    run_time = elapsed,
                     the_call = the_call, formula = ff)),
       class = c("flexybayes_koine", "list")))
   }
@@ -141,8 +212,7 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
       elpd_stacked = res$opinion$elpd_stacked,
       independence = res$independence,
       diagnostics = res$diagnostics,
-      model_info = list(n_obs = nrow(data), n_fixed = ncol(x),
-                        family = fb$family, link = fb$link),
+      model_info = model_info,
       run_time = elapsed, the_call = the_call, formula = ff)),
     class = c("flexybayes_koine", "list"))
 }
@@ -159,7 +229,11 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
     if (identical(v, "sigma")) {
       "sigma"
     } else if (identical(v, "tau")) {
+      # single-grouping model: koine names the one group SD `tau`
       paste0("sd_", grp)
+    } else if (grepl("^tau_", v)) {
+      # MET: koine names the two group SDs `tau_<grouping>`
+      sub("^tau_", "sd_", v)
     } else {
       sub("^b_", "", v)
     }
