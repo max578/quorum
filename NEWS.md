@@ -11,6 +11,44 @@
   asymmetric comparison that miscalibrates the aggregated test's level.
   Both are now ranked against the pooled set of the observed statistic and
   its B permutation replicates together, per bandwidth.
+* **Contract ownership corrected in the shipped documentation (FBO-04).**
+  `inst/surrogate_contract.md`, `inst/ensemble_source_contract.md`, both
+  vignettes, and the roxygen for `fit_surrogate()`, `predict.fb_surrogate()`,
+  `register_surrogate()`, `fb_ensemble()`, `as_fb_ensemble()`,
+  `register_ensemble_source()`, and `fb_pesto()` attributed contracts C5
+  (`fb_ensemble`) and C7 (`fb_surrogate`) to `flexyBayes`; `flexyBayes` 0.9.2
+  exports neither verb. Ownership is now attributed to
+  `flexyBayesOrchestra` throughout, which is where both contracts are
+  actually implemented; a reader following the shipped contract no longer
+  calls a function that does not exist.
+* **`getting-started` vignette replaced (FBO-08).** The shipped vignette was
+  a self-declared build-clean stub (`library()` and nothing else). It now
+  walks the three composition seams (ingest an ensemble, emulate it,
+  triangulate with koine), including the governing predictive-distribution
+  equation for the reference `rff` surrogate with its citation.
+* **`surrogate-workflow` vignette gains three captioned, interpreted
+  figures (FBO-09).** A predictive band against truth across and beyond the
+  design (the picture that would have shown an emulator reporting
+  in-design-sized uncertainty off-design), the dense cross-output covariance
+  beside its rank-1 reconstruction, and the ES-MDA inversion misfit trace.
+  Grammar and false-attribution issues in its prose fixed alongside.
+* **Governing mathematics added to `predict.fb_surrogate()` (FBO-15).** The
+  reference surrogate's predictive mean/variance, previously stated only in
+  `#` comments, is now a `\deqn` block with a citation (Bishop, 2006).
+  `@examples` added to `predict.fb_surrogate()`, `fb_surrogate_ppc()`, and
+  `as_fb_ensemble()` -- the three headline consumers that previously shipped
+  with none.
+* **`koine_status()` documentation corrected (FBO-12).** Its `@description`
+  still read "provisioned but dormant until koine ships a programmatic,
+  re-entrant model builder"; the slot has been active by default since
+  2026-06-08. Rewritten to describe the activated state.
+* **README refreshed (FBO-16).** Dropped the stale "dormant koine slot" and
+  unimplemented "gretaR engine, registered against the backend registry"
+  bullets (this package registers no gretaR anything); added a minimal
+  runnable ingest-emulate-predict example.
+* Non-ASCII arrow in `as_fb_ensemble()` roxygen replaced with `->` (FBO-19;
+  `tools::checkRd()` flagged it as non-ASCII content without a declared
+  encoding).
 
 # flexyBayesOrchestra 0.0.0.9000
 

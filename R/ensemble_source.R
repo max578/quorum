@@ -5,7 +5,7 @@
 # calibration manifest, a raw apsimx run extracted to data.frames, a saved file,
 # or a future registered producer -- into ONE canonical `fb_ensemble` object the
 # methods-intense consumers (fb_pesto(), the surrogate seam, fb_apsim()) build
-# on. flexyBayes depends on the CONTRACT (inst/ensemble_source_contract.md),
+# on. flexyBayesOrchestra depends on the CONTRACT (inst/ensemble_source_contract.md),
 # never on apsimx / PESTO internals. APSIM is executed upstream by apsimx; no
 # code here runs APSIM.
 #
@@ -23,11 +23,11 @@
 
 #' Construct a canonical simulation-ensemble object
 #'
-#' Builds an `fb_ensemble` -- flexyBayes's canonical container for a
+#' Builds an `fb_ensemble` -- flexyBayesOrchestra's canonical container for a
 #' parameter-to-output simulation ensemble (contract C5,
 #' `inst/ensemble_source_contract.md`). `params` and `outputs` are the `(X, Y)`
 #' an emulator or surrogate trains on; `output_dims` and `observed` add the
-#' calibration framing when present. flexyBayes never executes the simulator
+#' calibration framing when present. flexyBayesOrchestra never executes the simulator
 #' (APSIM is run upstream by `apsimx`); this is the ingest floor the
 #' methods-intense consumers share.
 #'
@@ -158,9 +158,9 @@ verify_fb_ensemble <- function(e) {
 #' Register an ensemble-source coercer for a producer class
 #'
 #' Extends [as_fb_ensemble()] so a new producer of simulation ensembles becomes
-#' ingestible without modifying flexyBayes. The coercer takes a producer object
+#' ingestible without modifying flexyBayesOrchestra. The coercer takes a producer object
 #' and returns an `fb_ensemble`. This is the constellation extensibility seam
-#' for contract C5: a member registers its coercer rather than flexyBayes
+#' for contract C5: a member registers its coercer rather than flexyBayesOrchestra
 #' hard-coding the member.
 #'
 #' @param producer_class A single string -- the S3 class of the producer object.
@@ -204,7 +204,7 @@ register_ensemble_source <- function(producer_class, coercer) {
 #'
 #' The single ingest entry point for contract C5. Dispatches on the producer:
 #' an `fb_ensemble` is returned unchanged; a `pesto_ensemble_manifest` (PESTO's
-#' S7 calibration manifest) is mapped via the C2 → C5 bridge; a `list` carrying
+#' S7 calibration manifest) is mapped via the C2 -> C5 bridge; a `list` carrying
 #' `params` / `outputs` is wrapped; a length-1 character path is read from disk.
 #' Any other class is looked up in the producer registry
 #' ([register_ensemble_source()]) before erroring.
@@ -213,6 +213,18 @@ register_ensemble_source <- function(producer_class, coercer) {
 #' @param ... Passed to the matched coercer.
 #' @return An `fb_ensemble`.
 #' @seealso `inst/ensemble_source_contract.md`.
+#' @examples
+#' # an fb_ensemble round-trips unchanged
+#' ens <- fb_ensemble(
+#'   params = data.frame(p1 = runif(10)),
+#'   outputs = data.frame(o1 = runif(10)),
+#'   provenance = list(source = "raw")
+#' )
+#' identical(as_fb_ensemble(ens), ens)
+#'
+#' # a bare list carrying params / outputs is wrapped the same way
+#' as_fb_ensemble(list(params = data.frame(p1 = runif(5)),
+#'                      outputs = data.frame(o1 = runif(5))))
 #' @export
 as_fb_ensemble <- function(x, ...) {
   UseMethod("as_fb_ensemble")
@@ -281,7 +293,7 @@ as_fb_ensemble.default <- function(x, ...) {
 # PESTO's pesto_ensemble_manifest (S7) carries params + outputs (row-aligned) +
 # obs_target + apsim_version -- a superset of C5. Coerced WITHOUT importing
 # PESTO: the S7 properties are read via S7::prop(), guarded by S7 availability
-# and a class check, so flexyBayes stays standalone-functional when PESTO is
+# and a class check, so flexyBayesOrchestra stays standalone-functional when PESTO is
 # absent (dormant-correct).
 
 .coerce_pesto_manifest <- function(x, ...) {

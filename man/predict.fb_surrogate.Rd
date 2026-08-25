@@ -2,7 +2,7 @@
 % Please edit documentation in R/surrogate.R
 \name{predict.fb_surrogate}
 \alias{predict.fb_surrogate}
-\title{Predict from a flexyBayes surrogate (mean + sd per output)}
+\title{Predict from a flexyBayesOrchestra surrogate (mean + sd per output)}
 \usage{
 \method{predict}{fb_surrogate}(object, newdata, cov = FALSE, ...)
 }
@@ -48,4 +48,27 @@ instead of the dense \verb{O(k^2 n)} array. The factor \code{u} has the surrogat
 \code{cov_rank} columns (the full \code{k} if it was fit without \code{cov_rank}).
 Reconstruct a slice with \code{\link[=fb_cov_slice]{fb_cov_slice()}}. The diagonal still equals
 \verb{<o>_sd^2} exactly.
+
+For the reference \code{rff} method, writing \eqn{\phi(x)} for the random
+Fourier feature map of a new parameter set \eqn{x}, the reported mean and
+variance are the Bayesian-linear-regression predictive moments
+\deqn{
+  E[y \mid x] = \phi(x)^\top \mu_N, \qquad
+  Var[y \mid x] = 1/t + \phi(x)^\top S_N \phi(x),
+}
+with posterior weight mean \eqn{\mu_N}, posterior weight covariance
+\eqn{S_N}, and noise precision \eqn{t} set by MacKay evidence maximisation
+at fit time (Bishop, 2006, sec. 3.3, 3.5).
+}
+\examples{
+theta <- cbind(p1 = runif(60, -2, 2), p2 = runif(60, -2, 2))
+y <- theta \%*\% rbind(c(1.5, -0.8), c(0.4, 1.1)) + rnorm(120, 0, 0.1)
+ens <- fb_ensemble(as.data.frame(theta), as.data.frame(y),
+                    provenance = list(source = "raw"))
+sur <- fit_surrogate(ens)
+predict(sur, data.frame(p1 = 1, p2 = -1))
+}
+\references{
+Bishop, C. M. (2006). \emph{Pattern Recognition and Machine
+Learning}. Springer, secs. 3.3 and 3.5.
 }

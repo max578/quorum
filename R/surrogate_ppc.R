@@ -394,6 +394,22 @@ print.fb_mmd_agg <- function(x, ...) {
 #'   `fb_mmd_agg` object (`$p_value`, `$reject`, `$statistic`, `$bandwidths`,
 #'   `$p_per_bandwidth`).
 #' @seealso [fit_surrogate()], [predict.fb_surrogate()], [fb_surrogate_ies()].
+#' @examplesIf requireNamespace("kernR", quietly = TRUE)
+#' g <- rbind(c(1.5, -0.8), c(0.4, 1.1))
+#' theta <- cbind(p1 = runif(80, -2, 2), p2 = runif(80, -2, 2))
+#' y <- theta %*% t(g) + matrix(rnorm(160, 0, 0.1), 80, 2L)
+#' colnames(y) <- c("o1", "o2")
+#' ens <- fb_ensemble(as.data.frame(theta), as.data.frame(y),
+#'                     provenance = list(source = "raw"))
+#' sur <- fit_surrogate(ens)
+#'
+#' held <- data.frame(p1 = runif(30, -2, 2), p2 = runif(30, -2, 2))
+#' truth_held <- held$p1 %o% g[, 1] + held$p2 %o% g[, 2] +
+#'   matrix(rnorm(60, 0, 0.1), 30, 2L)
+#' colnames(truth_held) <- c("o1", "o2")
+#' check <- fb_surrogate_ppc(sur, held, as.data.frame(truth_held),
+#'                            n_draws = 3L, seed = 1L, n_permutations = 99L)
+#' check$p_value
 #' @export
 fb_surrogate_ppc <- function(
   surrogate,

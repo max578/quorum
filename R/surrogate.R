@@ -9,7 +9,7 @@
 # inverse/calibration step needs is not silently destroyed (the
 # "distribution-preserving surrogate" the constellation's methods thesis names).
 #
-# flexyBayes owns the surrogate CONTRACT (inst/surrogate_contract.md) + a
+# flexyBayesOrchestra owns the surrogate CONTRACT (inst/surrogate_contract.md) + a
 # registry + a self-contained REFERENCE surrogate (random Fourier features +
 # Bayesian linear regression, evidence-optimised UQ). kernR's CME /
 # dist_regression and PESTO's GP / RFF surrogates are richer CONFORMING
@@ -407,14 +407,14 @@
 
 # ---- the surrogate registry (extensibility seam) ----------------------------
 # method -> fit function. kernR registers "cme", PESTO registers "gp" / "rff_gp"
-# from their own packages; flexyBayes ships "rff" (the self-contained default).
+# from their own packages; flexyBayesOrchestra ships "rff" (the self-contained default).
 
 .surrogate_registry <- new.env(parent = emptyenv())
 
 #' Register a surrogate-fitting method
 #'
 #' Extends [fit_surrogate()] with a new conforming surrogate (contract C7,
-#' `inst/surrogate_contract.md`) without modifying flexyBayes. The fit function
+#' `inst/surrogate_contract.md`) without modifying flexyBayesOrchestra. The fit function
 #' takes the standardised design `x` (parameter sets), the response matrix `y`
 #' (outputs), and `...`, and returns an object with a `predict()` method
 #' yielding a per-output predictive mean and sd. This is how kernR's CME /
@@ -699,7 +699,7 @@ fit_surrogate <- function(
   )
 }
 
-#' Predict from a flexyBayes surrogate (mean + sd per output)
+#' Predict from a flexyBayesOrchestra surrogate (mean + sd per output)
 #'
 #' Returns the surrogate's predictive distribution at new parameter sets. By
 #' default a `data.frame` carrying, for each emulated output `<o>`, a `<o>_mean`
@@ -722,6 +722,17 @@ fit_surrogate <- function(
 #' Reconstruct a slice with [fb_cov_slice()]. The diagonal still equals
 #' `<o>_sd^2` exactly.
 #'
+#' For the reference `rff` method, writing \eqn{\phi(x)} for the random
+#' Fourier feature map of a new parameter set \eqn{x}, the reported mean and
+#' variance are the Bayesian-linear-regression predictive moments
+#' \deqn{
+#'   E[y \mid x] = \phi(x)^\top \mu_N, \qquad
+#'   Var[y \mid x] = 1/t + \phi(x)^\top S_N \phi(x),
+#' }
+#' with posterior weight mean \eqn{\mu_N}, posterior weight covariance
+#' \eqn{S_N}, and noise precision \eqn{t} set by MacKay evidence maximisation
+#' at fit time (Bishop, 2006, sec. 3.3, 3.5).
+#'
 #' @param object An `fb_surrogate` from [fit_surrogate()].
 #' @param newdata A `data.frame` of new parameter sets; must contain the
 #'   surrogate's `param_names` columns.
@@ -735,6 +746,15 @@ fit_surrogate <- function(
 #'   `fb_surrogate_prediction` (`mean`, `cov`, `output_names`). With
 #'   `cov = "lowrank"` an `fb_surrogate_prediction` (`mean`, `cov_lowrank`,
 #'   `output_names`).
+#' @references Bishop, C. M. (2006). *Pattern Recognition and Machine
+#'   Learning*. Springer, secs. 3.3 and 3.5.
+#' @examples
+#' theta <- cbind(p1 = runif(60, -2, 2), p2 = runif(60, -2, 2))
+#' y <- theta %*% rbind(c(1.5, -0.8), c(0.4, 1.1)) + rnorm(120, 0, 0.1)
+#' ens <- fb_ensemble(as.data.frame(theta), as.data.frame(y),
+#'                     provenance = list(source = "raw"))
+#' sur <- fit_surrogate(ens)
+#' predict(sur, data.frame(p1 = 1, p2 = -1))
 #' @export
 predict.fb_surrogate <- function(object, newdata, cov = FALSE, ...) {
   if (missing(newdata) || !is.data.frame(newdata)) {
