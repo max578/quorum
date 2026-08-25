@@ -134,12 +134,15 @@
 #'
 #' Returns the activation state of the koine backend slot plus the procedure to
 #' activate it. koine is the synthesised fourth opinion on flexyBayes's
-#' orthogonal lens axis (the constellation's C1 + C3 contracts); its slot is
-#' provisioned but dormant until koine ships a programmatic, re-entrant model
-#' builder confirmed against the backend contract. Until then this helper is the
-#' canonical discoverability surface -- users who see "koine" referenced in the
-#' constellation charter or the backend contract can call `koine_status()` to
-#' inspect why the slot is dormant and how to wake it.
+#' orthogonal lens axis (the constellation's C1 + C3 contracts). The slot has
+#' been **active by default since 2026-06-08** on an installed koine at or
+#' above the version floor, gated only by
+#' `options(flexyBayesOrchestra.koine_activated)`; it falls back to dormant
+#' (a structured `koine_dormant_refusal`) when koine is absent, below floor, or
+#' the option is set `FALSE`. This helper is the canonical discoverability
+#' surface -- call `koine_status()` to check whether the slot is currently
+#' active on the installed koine version and, if not, why and how to activate
+#' it.
 #'
 #' @return A list with components:
 #'   \describe{

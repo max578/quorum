@@ -17,10 +17,23 @@ An \code{fb_ensemble}.
 \description{
 The single ingest entry point for contract C5. Dispatches on the producer:
 an \code{fb_ensemble} is returned unchanged; a \code{pesto_ensemble_manifest} (PESTO's
-S7 calibration manifest) is mapped via the C2 → C5 bridge; a \code{list} carrying
+S7 calibration manifest) is mapped via the C2 -> C5 bridge; a \code{list} carrying
 \code{params} / \code{outputs} is wrapped; a length-1 character path is read from disk.
 Any other class is looked up in the producer registry
 (\code{\link[=register_ensemble_source]{register_ensemble_source()}}) before erroring.
+}
+\examples{
+# an fb_ensemble round-trips unchanged
+ens <- fb_ensemble(
+  params = data.frame(p1 = runif(10)),
+  outputs = data.frame(o1 = runif(10)),
+  provenance = list(source = "raw")
+)
+identical(as_fb_ensemble(ens), ens)
+
+# a bare list carrying params / outputs is wrapped the same way
+as_fb_ensemble(list(params = data.frame(p1 = runif(5)),
+                     outputs = data.frame(o1 = runif(5))))
 }
 \seealso{
 \code{inst/ensemble_source_contract.md}.

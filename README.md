@@ -19,9 +19,9 @@ only make sense inside the wider analytics constellation:
   prior (`fb_prior_from_ensemble()`, `fb_pesto()`).
 - **Surrogate posterior predictive checks** — MMD-based checks
   (`fb_surrogate_ppc()`, `fb_surrogate_ies()`).
-- **Dormant cross-engine backend slots** — the koine fourth-opinion slot
-  and the gretaR engine, registered against the `flexyBayes` backend
-  registry.
+- **koine fourth-opinion slot** — the synthesised orthogonal-lens
+  opinion `flexyBayes::triangulate()` consumes, active by default on a
+  compatible koine install (`koine_status()`).
 
 If you only need Bayesian mixed models, install `flexyBayes` alone.
 Install this package when you are composing `flexyBayes` with PESTO /
@@ -30,8 +30,24 @@ kernR / the rest of the orchestra.
 ## Installation
 
 ``` r
-# installs flexyBayes (the core) and the orchestra optionals as needed
+# installs flexyBayes (the core) and the orchestra optionals as needed;
+# needs read access to the private max578/flexyBayes and max578/koine repos
 pak::pak("max578/flexyBayesOrchestra")
+```
+
+## Minimal example
+
+``` r
+library(flexyBayesOrchestra)
+
+# a small parameter -> output ensemble, as if from a simulator
+theta <- cbind(p1 = runif(80, -2, 2), p2 = runif(80, -2, 2))
+y <- theta %*% rbind(c(1.5, -0.8), c(0.4, 1.1)) + rnorm(160, 0, 0.1)
+ens <- fb_ensemble(as.data.frame(theta), as.data.frame(y), provenance = list(source = "raw"))
+
+# fit a distribution-preserving surrogate and read its predictive sd
+sur <- fit_surrogate(ens)
+predict(sur, data.frame(p1 = 1, p2 = -1))
 ```
 
 ## Relationship to flexyBayes

@@ -23,8 +23,8 @@ set.seed(1)
 ```
 
 A *surrogate* (or emulator) replaces an expensive simulator with a fast map
-from parameter sets to outputs. The flexyBayes surrogate (contract C7) does
-one extra thing that an ordinary regression emulator does not: it reports a
+from parameter sets to outputs. The flexyBayesOrchestra surrogate (contract C7)
+does one extra thing that an ordinary regression emulator does not: it reports a
 predictive **distribution**, not a point. Reporting the predictive standard
 deviation alongside the mean is what lets a downstream calibration or inverse
 step stay honest about emulator error instead of silently treating the
@@ -33,8 +33,8 @@ surrogate as exact.
 This vignette walks the whole loop on a small, self-contained example -- ingest
 an ensemble, fit a surrogate, read its predictive distribution, invert it against
 observed data, and check whether it distorted the output distribution. The
-reference surrogate ships with flexyBayes and needs no other package, so every
-code chunk below runs as shown.
+reference surrogate ships with flexyBayesOrchestra itself and needs no other
+package, so every code chunk below runs as shown.
 
 ## A simulator we can check against
 
@@ -87,6 +87,33 @@ newdata <- data.frame(p1 = c(1.0, -2.0), p2 = c(0.5, 1.5))
 predict(sur, newdata)
 ```
 
+```{r fig-predictive-band, fig.cap = "Predictive mean (line) and \\pm 2 standard-deviation band (ribbon) for output o1 as p1 sweeps from -3 to 6 at p2 = 0, against the true linear response (dashed); the design only covers p1 in [-3, 3] (shaded), so the region to the right of it is genuinely out-of-design."}
+p1_sweep <- seq(-3, 6, length.out = 200L)
+sweep_df <- data.frame(p1 = p1_sweep, p2 = 0)
+pred_sweep <- predict(sur, sweep_df)
+truth_sweep <- g[1L, 1L] * p1_sweep + g[1L, 2L] * 0
+plot(p1_sweep, pred_sweep$o1_mean, type = "l", lwd = 2, col = "steelblue",
+     ylim = range(c(pred_sweep$o1_mean + 2 * pred_sweep$o1_sd,
+                    pred_sweep$o1_mean - 2 * pred_sweep$o1_sd, truth_sweep)),
+     xlab = "p1 (p2 fixed at 0)", ylab = "o1", main = "Predictive band vs truth")
+polygon(c(p1_sweep, rev(p1_sweep)),
+        c(pred_sweep$o1_mean + 2 * pred_sweep$o1_sd,
+          rev(pred_sweep$o1_mean - 2 * pred_sweep$o1_sd)),
+        col = grDevices::adjustcolor("steelblue", alpha.f = 0.2), border = NA)
+lines(p1_sweep, truth_sweep, lty = 2, col = "firebrick", lwd = 2)
+rect(-3, par("usr")[3], 3, par("usr")[4],
+     col = grDevices::adjustcolor("grey50", alpha.f = 0.08), border = NA)
+legend("topleft", c("predictive mean", "truth", "design range"),
+       col = c("steelblue", "firebrick", "grey50"), lty = c(1, 2, NA),
+       pch = c(NA, NA, 15), lwd = c(2, 2, NA), bty = "n")
+```
+
+Inside the shaded design range the band hugs the truth and stays tight; once
+`p1` moves past 3 the mean starts to bend away from the true straight line and
+the band widens accordingly -- the reference surrogate is honestly less certain
+where it has never seen data, which is the behaviour clause 2 of the C7
+contract exists to require of every registered conformer.
+
 By default the reference surrogate fits the outputs **jointly**, so it preserves
 the cross-output predictive covariance, not only the per-output marginals.
 `predict(..., cov = TRUE)` returns that covariance as a per-row array, and
@@ -96,6 +123,25 @@ the cross-output predictive covariance, not only the per-output marginals.
 pc <- predict(sur, newdata, cov = TRUE)
 round(fb_cov_slice(pc, 1L), 3)
 ```
+
+```{r fig-cov-heatmap, fig.cap = "Predictive cross-output covariance for row 1 of newdata (dense k x k slice, left) beside its rank-1 low-rank reconstruction (right); darker cells are larger covariance magnitude."}
+cov_dense <- fb_cov_slice(pc, 1L)
+sur_lr_fig <- fit_surrogate(ens, cov_rank = 1L)
+pc_lr <- predict(sur_lr_fig, newdata, cov = "lowrank")
+u <- pc_lr$cov_lowrank$u; d <- pc_lr$cov_lowrank$d; infl <- pc_lr$cov_lowrank$infl[1L]
+cov_lr <- infl * (u %*% t(u) + diag(d))
+zlim <- range(c(cov_dense, cov_lr))
+op <- par(mfrow = c(1, 2), mar = c(2, 2, 3, 1))
+image(cov_dense, main = "dense", axes = FALSE, zlim = zlim, col = heat.colors(20))
+image(cov_lr, main = "rank-1", axes = FALSE, zlim = zlim, col = heat.colors(20))
+par(op)
+```
+
+The rank-1 reconstruction reproduces the diagonal of the dense covariance
+exactly (clause 5 of the C7 contract) and visibly recovers the same
+off-diagonal pattern from a single latent factor, at `O(k)` rather than
+`O(k^2)` storage -- the picture that makes the low-rank approximation's
+fidelity, not just its numeric closeness, inspectable.
 
 The diagonal of that slice equals the `<o>_sd` values squared, exactly -- the
 marginal contract is never broken by the joint fit.
@@ -133,14 +179,24 @@ rbind(
 )
 ```
 
+```{r fig-misfit-trace, fig.cap = "Mean data misfit across the ES-MDA iterations, from the prior ensemble (iteration 0) to the final posterior."}
+plot(seq_along(fit$misfit) - 1L, fit$misfit, type = "b", pch = 16,
+     col = "steelblue", xlab = "ES-MDA iteration", ylab = "mean data misfit",
+     main = "Inversion trace")
+```
+
+The misfit falls monotonically from the prior to the final iteration, which is
+the diagnostic that the assimilation is actually pulling the ensemble toward
+agreement with the observed data rather than merely inflating its spread.
+
 ## Check: did the surrogate distort the distribution?
 
 A surrogate can recover the mean while getting the *spread* or the *cross-output
 correlation* wrong. `fb_surrogate_ppc()` tests the predictive distribution
 itself, by drawing from the surrogate at held-out parameter sets and comparing
 the draw cloud to the true simulator outputs with kernR's maximum-mean-discrepancy
-posterior-predictive check. The MMD test lives in kernR -- flexyBayes only
-generates the predictive sample -- so this chunk runs only when kernR is
+posterior-predictive check. The MMD test lives in kernR -- flexyBayesOrchestra
+only generates the predictive sample -- so this chunk runs only when kernR is
 installed.
 
 ```{r ppc, eval = requireNamespace("kernR", quietly = TRUE)}
@@ -180,13 +236,14 @@ formed: `fb_surrogate_ies()` folds it into the Kalman update through the Woodbur
 identity, and `fb_surrogate_ppc()` samples it factored (and, with
 `project = TRUE`, runs the discrepancy test in the `q`-dimensional factor space,
 which is cheaper and higher-powered on the correlated structure for a large
-output count). The factor itself is fitted by an eigen-truncation,
-factor-analysis EM (`cov_method = "fa"`, more faithful when the residual noise is
-uneven across outputs), or `"auto"`.
+output count). The factor itself is fitted by one of three methods: an
+eigen-truncation (the default), a factor-analysis EM (`cov_method = "fa"`,
+more faithful when the residual noise is uneven across outputs), or `"auto"`
+(picks between them by the heteroscedasticity of the eigen-residual diagonal).
 
 ## Where the seam goes
 
-The reference `rff` surrogate keeps flexyBayes standalone-functional. Richer
+The reference `rff` surrogate keeps flexyBayesOrchestra standalone-functional. Richer
 emulators -- a Gaussian process, a conditional mean embedding -- register through
 `register_surrogate()` and are consumed through exactly the same `predict()`
 contract, so the inversion and the check above work unchanged with a sibling's

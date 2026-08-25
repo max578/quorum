@@ -249,20 +249,24 @@
   t_obs <- vapply(res, function(r) r$statistic, numeric(1L))
   nmat <- vapply(res, function(r) r$null_distribution, numeric(n_permutations))
   b_perm <- nrow(nmat) # B permutations x G bandwidths
-  p_obs <- vapply(
-    seq_along(grid),
-    function(g) (1 + sum(nmat[, g] >= t_obs[g])) / (1 + b_perm),
-    numeric(1L)
-  )
-  # per-permutation p-value within each bandwidth's own (shared) null
-  pj <- vapply(
+  # Pool the observed statistic with its B permutation replicates per
+  # bandwidth (B + 1 exchangeable values under the null) and rank every
+  # element -- observed included -- against that same pool. Ranking the
+  # permutation replicates against each other only (excluding themselves)
+  # while ranking the observed statistic against the full B would inflate
+  # every permutation p-value relative to the observed one by exactly one
+  # self-comparison, biasing the aggregated test's level.
+  p_pooled <- vapply(
     seq_along(grid),
     function(g) {
-      col <- nmat[, g]
-      (1 + colSums(outer(col, col, ">="))) / (1 + b_perm)
+      pooled <- c(t_obs[g], nmat[, g]) # row 1 = observed, rows 2:(B+1) = perms
+      (1 + colSums(outer(pooled, pooled, ">="))) / (1 + length(pooled))
     },
-    numeric(b_perm)
+    numeric(b_perm + 1L)
   )
+  p_obs <- p_pooled[1L, ]
+  # per-permutation p-value within each bandwidth's own pooled null
+  pj <- p_pooled[-1L, , drop = FALSE]
   # weighted-quantile aggregation (Schrab et al. 2023): the statistic is
   # R = min_g p_g / w_g (kernel g exceeds its (1 - u w_g)-quantile iff
   # p_g <= u w_g), calibrated against the shared permutation null. Uniform
@@ -390,6 +394,22 @@ print.fb_mmd_agg <- function(x, ...) {
 #'   `fb_mmd_agg` object (`$p_value`, `$reject`, `$statistic`, `$bandwidths`,
 #'   `$p_per_bandwidth`).
 #' @seealso [fit_surrogate()], [predict.fb_surrogate()], [fb_surrogate_ies()].
+#' @examplesIf requireNamespace("kernR", quietly = TRUE)
+#' g <- rbind(c(1.5, -0.8), c(0.4, 1.1))
+#' theta <- cbind(p1 = runif(80, -2, 2), p2 = runif(80, -2, 2))
+#' y <- theta %*% t(g) + matrix(rnorm(160, 0, 0.1), 80, 2L)
+#' colnames(y) <- c("o1", "o2")
+#' ens <- fb_ensemble(as.data.frame(theta), as.data.frame(y),
+#'                     provenance = list(source = "raw"))
+#' sur <- fit_surrogate(ens)
+#'
+#' held <- data.frame(p1 = runif(30, -2, 2), p2 = runif(30, -2, 2))
+#' truth_held <- held$p1 %o% g[, 1] + held$p2 %o% g[, 2] +
+#'   matrix(rnorm(60, 0, 0.1), 30, 2L)
+#' colnames(truth_held) <- c("o1", "o2")
+#' check <- fb_surrogate_ppc(sur, held, as.data.frame(truth_held),
+#'                            n_draws = 3L, seed = 1L, n_permutations = 99L)
+#' check$p_value
 #' @export
 fb_surrogate_ppc <- function(
   surrogate,

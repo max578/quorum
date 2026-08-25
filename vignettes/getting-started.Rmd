@@ -18,9 +18,111 @@ knitr::opts_chunk$set(
 library(flexyBayesOrchestra)
 ```
 
-This vignette is the documentation entry point for **flexyBayesOrchestra**. It is
-intentionally a build-clean stub at scaffold time: it loads the package and
-nothing more, so `R CMD check --as-cran` passes from day one. Replace this
-text with a real getting-started narrative as the package matures — see
-the `vignettes/` directory in `nasapower`, `dplyr`, or any rOpenSci package
-for examples of expanded vignettes.
+## The composition question
+
+`flexyBayes` alone fits a Bayesian mixed model given data you already have. It
+has no opinion on where that data came from, and no way to check its answer
+against a second, independently-derived one. `flexyBayesOrchestra` exists for
+the questions that only arise once `flexyBayes` sits inside a wider analytics
+constellation:
+
+- **Where does the data come from when it is the output of an expensive
+  simulator** -- an APSIM run, a PEST++ calibration -- rather than a table
+  someone already collected?
+- **Can inference proceed without paying the simulator's cost on every draw**,
+  while still being honest about the extra uncertainty that shortcut costs?
+- **Does a second, structurally different method agree with the Bayesian fit**,
+  or is the agreement only apparent because both methods share an assumption?
+
+This package answers those three questions with three seams, each a typed
+contract rather than a private convention, so any conforming producer or
+consumer can plug in without a code change here.
+
+## Seam 1 -- ingest a simulation ensemble (contract C5)
+
+A simulation ensemble is a set of parameter draws paired with the simulator's
+response to each draw: a design matrix and a row-aligned output matrix. The
+canonical container is `fb_ensemble()`; `as_fb_ensemble()` coerces a
+conforming producer (a PESTO calibration manifest, a raw `apsimx` run, a saved
+file) into that shape without either package depending on the other's
+internals.
+
+```{r ensemble}
+g <- rbind(c(1.5, -0.8), c(0.4, 1.1)) # 2 outputs x 2 params, for illustration
+theta <- cbind(p1 = runif(80, -2, 2), p2 = runif(80, -2, 2))
+y <- theta %*% t(g) + matrix(rnorm(160, 0, 0.1), 80, 2L)
+colnames(y) <- c("o1", "o2")
+
+ens <- fb_ensemble(
+  params = as.data.frame(theta),
+  outputs = as.data.frame(y),
+  provenance = list(source = "raw")
+)
+verify_fb_ensemble(ens)
+```
+
+`verify_fb_ensemble()` is the conformance check: it fails loudly, naming the
+first violation, rather than letting a malformed ensemble reach a surrogate
+fit silently.
+
+## Seam 2 -- emulate the simulator (contract C7)
+
+`fit_surrogate()` trains a fast stand-in for the simulator: a map from
+parameters to outputs that reports a predictive *distribution*, not a point,
+so a downstream calibration step can stay honest about emulator error instead
+of treating the surrogate as exact. The reference method, `"rff"`, is a
+random-features Bayesian linear model. Writing $\phi(x) \in \mathbb{R}^m$ for
+the random Fourier feature map of a parameter vector $x$ (Rahimi and Recht,
+2007), the predictive distribution at a new point $x_*$ is Gaussian with
+
+$$
+\mathbb{E}[y \mid x_*] = \phi(x_*)^{\top} \mu_N, \qquad
+\operatorname{Var}[y \mid x_*] = \frac{1}{t} + \phi(x_*)^{\top} S_N \, \phi(x_*),
+$$
+
+where $\mu_N$ and $S_N$ are the posterior mean and covariance of the linear
+weights and $t$ is the noise precision; both the prior precision $a$ and $t$
+are set by MacKay evidence maximisation rather than fixed by hand (Bishop,
+2006, secs. 3.3, 3.5). That evidence-optimised $t$ is what makes the reported
+standard deviation calibrated instead of an arbitrary ridge parameter.
+
+```{r surrogate}
+sur <- fit_surrogate(ens)
+predict(sur, data.frame(p1 = 1, p2 = -1))
+```
+
+Richer emulators -- PESTO's Gaussian process, kernR's conditional mean
+embedding -- register through `register_surrogate()` and are consumed through
+exactly this same `predict()` contract; see the *Distribution-preserving
+surrogates* vignette for the full loop, including inversion against observed
+data and a posterior-predictive check of whether the surrogate distorted the
+output distribution.
+
+## Seam 3 -- triangulate with koine (contract C3)
+
+koine is `flexyBayes`'s fourth opinion: an independently-derived REML or
+population-GLM fit that `triangulate()` compares against the Bayesian
+backends. Agreement across methods that do not share an inferential engine is
+stronger evidence than agreement within one engine's diagnostics.
+`koine_status()` reports whether the slot is currently active on the installed
+koine version, without requiring koine to be installed to load this package:
+
+```{r koine-status}
+koine_status()
+```
+
+## Where to go next
+
+The *Distribution-preserving surrogates* vignette walks the full seam-2 loop
+end to end -- ingest, fit, read the distribution, invert, and check -- on a
+small worked example with figures. `?fit_surrogate`, `?fb_surrogate_ies`, and
+`?fb_surrogate_ppc` document each verb's arguments and return value.
+
+## References
+
+Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer.
+Sections 3.3 (Bayesian linear regression) and 3.5 (the evidence
+approximation).
+
+Rahimi, A. and Recht, B. (2007). Random features for large-scale kernel
+machines. *Advances in Neural Information Processing Systems*, 20.

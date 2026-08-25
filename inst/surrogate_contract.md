@@ -1,17 +1,17 @@
-# flexyBayes surrogate contract (C7, v1.2)
+# flexyBayesOrchestra surrogate contract (C7, v1.2)
 
 The interface a **simulator surrogate** (emulator) must honour to be a
-first-class flexyBayes surrogate. A surrogate replaces an expensive forward
+first-class flexyBayesOrchestra surrogate. A surrogate replaces an expensive forward
 model with a fast map from parameter sets to outputs -- and, critically, reports
 a predictive **distribution** (not a point), so the uncertainty a calibration /
 inverse step depends on is preserved. This is contract **C7** in the flexyBayes
 Constellation (`CONSTELLATION.md`); it is the methods-intense payoff downstream
 of the C5 ensemble-source floor.
 
-The design rule it encodes (same as C1 / C5): flexyBayes owns the **contract +
+The design rule it encodes (same as C1 / C5): flexyBayesOrchestra owns the **contract +
 registry + a self-contained reference implementation**; the richer surrogates
 live in their own packages and **register** here -- never reimplemented in
-flexyBayes.
+flexyBayesOrchestra.
 
 Status legend: [R] required, [O] optional.
 
@@ -77,27 +77,27 @@ on scale -- a conformer must not re-standardise.
 
 | Producer | method | How it conforms |
 |---|---|---|
-| **flexyBayes (reference)** | `rff` | Random Fourier features + Bayesian linear regression, predictive variance set by MacKay evidence maximisation (calibrated `<o>_sd`). Uses **ARD** lengthscales by default (per-input relevance learned from the evidence) and a **joint** multi-output fit (matrix-normal -- inverse-Wishart) preserving the cross-output covariance (clause 4); `ard = FALSE` / `joint = FALSE` recover the isotropic / per-output behaviour. `ard_refit = TRUE` profiles the prior/noise precisions `(a, t)` at each lengthscale (a fuller evidence, opt-in; `"cv"` regularises it on a k-fold held-out split); `cov_rank = q` stores a rank-`q` low-rank covariance (clause 5; `cov_method = "eigen"` / `"fa"` / `"auto"`) for large output counts. Self-contained -- the always-available default. |
+| **flexyBayesOrchestra (reference)** | `rff` | Random Fourier features + Bayesian linear regression, predictive variance set by MacKay evidence maximisation (calibrated `<o>_sd`). Uses **ARD** lengthscales by default (per-input relevance learned from the evidence) and a **joint** multi-output fit (matrix-normal -- inverse-Wishart) preserving the cross-output covariance (clause 4); `ard = FALSE` / `joint = FALSE` recover the isotropic / per-output behaviour. `ard_refit = TRUE` profiles the prior/noise precisions `(a, t)` at each lengthscale (a fuller evidence, opt-in; `"cv"` regularises it on a k-fold held-out split); `cov_rank = q` stores a rank-`q` low-rank covariance (clause 5; `cov_method = "eigen"` / `"fa"` / `"auto"`) for large output counts. Self-contained -- the always-available default. |
 | **PESTO** | `gp` | `train_gp_surrogate()` / `predict_gp_surrogate()` already report a per-output predictive `$mean` **and** `$variance`, so the adapter maps them straight onto `<o>_mean` / `<o>_sd = sqrt(variance)`. Registered by `register_pesto_surrogates()`. (PESTO's `rff` surrogate returns only an aggregate `$uncertainty`, not per-output variance, so it is not registered.) |
 | **kernR** | `cme` | `fit_cme()` is a kernel linear smoother: it yields the conditional *mean* `y_hat(x*) = w(x*)' y` but **no** predictive variance. The adapter supplies the standard linear-smoother predictive variance `sigma^2 (1 + ||w(x*)||^2)` (with `sigma^2 = RSS / (n - tr(S))` from the in-sample smoother), so `<o>_sd` is honest. The conditional-mean map stays kernR's; only the UQ is added. Registered by `register_kernr_surrogates()`. (`dist_regression()` takes distributional *bag* inputs, not a parameter design, so it is not a C7 surrogate.) |
 
-Both sibling adapters live in flexyBayes (`R/surrogate_conformers.R`), are
+Both sibling adapters live in flexyBayesOrchestra (`R/surrogate_conformers.R`), are
 `requireNamespace`-gated, and are registered opportunistically from `.onLoad`
 when the member is installed -- so `method = "gp"` / `"cme"` simply works when the
-sibling is present, and flexyBayes stays standalone otherwise.
+sibling is present, and flexyBayesOrchestra stays standalone otherwise.
 
 ## Why a contract, not a reimplementation
 
-- **No duplication.** flexyBayes ships only the reference `rff` surrogate; kernR's
+- **No duplication.** flexyBayesOrchestra ships only the reference `rff` surrogate; kernR's
   CME and PESTO's GP are consumed through the registry, not copied (the
-  constellation "contracts not internals" rule -- the same reason flexyBayes does
+  constellation "contracts not internals" rule -- the same reason flexyBayesOrchestra does
   not execute APSIM).
 - **Distribution preservation is a contract clause, not a hope.** Standard
   surrogate-accelerated calibration silently degrades UQ by plugging in point
   predictions; clause 2 makes `<o>_sd` mandatory, so a non-preserving surrogate
   fails to conform.
 - **Standalone-functional** (charter invariant 1): the `rff` reference needs no
-  sibling member -- flexyBayes emulates + propagates UQ on its own.
+  sibling member -- flexyBayesOrchestra emulates + propagates UQ on its own.
 
 ## Consumers
 
@@ -121,7 +121,7 @@ The surrogate's `<o>_mean` / `<o>_sd` feed:
   `predict()`; it deliberately does
   **not** route through PESTO's `pesto_surrogate_ies()`, which is monolithic
   (its GP is trained internally in C++ and cannot accept an external surrogate),
-  so flexyBayes is standalone-functional for surrogate-accelerated inversion.
+  so flexyBayesOrchestra is standalone-functional for surrogate-accelerated inversion.
 - **Emulator-distortion check** -- `fb_surrogate_ppc()` (`R/surrogate_ppc.R`):
   draws from the surrogate's predictive distribution at held-out parameter sets
   and hands the draws to kernR's `mmd_ppc()` against the true simulator outputs
@@ -159,7 +159,7 @@ The surrogate's `<o>_mean` / `<o>_sd` feed:
   bandwidth tuning, robust when the median heuristic is mis-scaled, at a valid
   level -- orchestrating kernR's single-kernel `mmd_test`.
   kernR owns the MMD machinery (the kernel, the statistic, the permutation null);
-  flexyBayes generates the predictive sample and, for `aggregate`, the
+  flexyBayesOrchestra generates the predictive sample and, for `aggregate`, the
   cross-bandwidth aggregation.
 - **Mechanistic-statistical fits** -- `fb_apsim()` (ADR 0009, partner-gated),
   provisioned in its own pass.
