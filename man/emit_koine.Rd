@@ -25,7 +25,13 @@ A \code{flexybayes_koine} object: a list with \code{status}
 (\code{"contributed"} or \code{"abstained"}), the canonicalised \code{draws}, the koine
 \code{koine} result, the \code{fb} IR, and an \code{extras} record (stacking weights,
 stacked ELPD, independence and diagnostics on the contributed path; the
-refusal reason and detail on the abstained path).
+refusal reason and detail on the abstained path). On the abstained path
+the object's class additionally carries \code{"flexyBayesOrchestra_abstention"}
+and \code{"orchestra_refusal"} prepended ahead of \code{"flexybayes_koine"}, so a
+producer-agnostic decline predicate (any class ending in \verb{_refusal} /
+\verb{_abstention}, or the \code{orchestra_refusal} marker) recognises the outer
+object without inspecting \verb{$koine}; \code{inherits(x, "flexybayes_koine")} and
+every \verb{*.flexybayes_koine} method still dispatch unchanged.
 }
 \description{
 Activates the koine lens-axis backend from the companion. Given a flexyBayes
