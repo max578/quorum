@@ -1,3 +1,17 @@
+# flexyBayesOrchestra (development version)
+
+* **`%||%` defined locally (FBO-03).** The infix was used nine times across
+  `R/` but defined nowhere in the package and imported from nowhere, so it
+  resolved only via `base::%||%` -- absent below R 4.4.0, against a declared
+  floor of R (>= 4.1.0). Added a package-local `%||%` in `R/utils.R`.
+* **Aggregated multi-kernel MMD PPC re-calibrated (FBO-07).** `.mmd_agg()`'s
+  per-permutation p-values (`pj`) ranked each permutation replicate against
+  its own bandwidth's null including itself, while the observed statistic's
+  p-value (`p_obs`) was ranked against the same null excluding it -- an
+  asymmetric comparison that miscalibrates the aggregated test's level.
+  Both are now ranked against the pooled set of the observed statistic and
+  its B permutation replicates together, per bandwidth.
+
 # flexyBayesOrchestra 0.0.0.9000
 
 * **koine genomic fourth opinion (`koine_genomic_lens()`).** The koine
