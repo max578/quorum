@@ -35,10 +35,36 @@
 .KOINE_MAX_GROUPINGS <- 2L
 .KOINE_INTERCEPT_TYPES <- c("simple", "ide", "id", "iid", "intercept")
 
+# Prepend the fleet-recognised decline stamp to an outer `flexybayes_koine`
+# wrapper's class vector, idempotently. The orchestra's cross-member
+# refusal/abstention contract (ORCHESTRA_dev's `integration/refusal_contract.R`
+# -- `is_orchestra_decline()`) is producer-agnostic: it recognises any class
+# ending in `_refusal` / `_abstention`, or the explicit `orchestra_refusal`
+# marker, but it only ever inspects the OUTER object a caller actually holds.
+# `emit_koine()`'s abstained exit already carries a real, correctly-typed
+# nested `koine_abstention` at `$koine` -- koine's own honest decline -- but
+# the outer wrapper itself was always plain `c("flexybayes_koine", "list")`,
+# invisible to that predicate. Stamping `"flexyBayesOrchestra_abstention"`
+# (this package's own member-specific suffix, matching every other member's
+# `<member>_abstention` naming convention) ahead of `"orchestra_refusal"`
+# (the explicit opt-in marker) makes the outer object dispatchable while
+# `class(x)[-(1:2)]` -- and every existing `inherits(x, "flexybayes_koine")` /
+# `is.list(x)` consumer -- is unchanged: the original two-element class vector
+# is preserved, just with two names prepended.
+.stamp_flexybayes_koine_abstention <- function(x) {
+  cls <- class(x)
+  new_cls <- c("flexyBayesOrchestra_abstention", "orchestra_refusal")
+  class(x) <- c(new_cls[!new_cls %in% cls], cls)
+  x
+}
+
 # Mint the honest fourth column: a typed `flexybayes_koine` carrying koine's own
-# abstention out of koine's corner, never a silently wrong opinion.
+# abstention out of koine's corner, never a silently wrong opinion. The outer
+# wrapper is itself stamped as an orchestra decline (see
+# `.stamp_flexybayes_koine_abstention()`), so a fleet-level gate sees it
+# without having to reach into `$koine`.
 .koine_abstained <- function(fb, data, the_call, reason, detail) {
-  structure(
+  .stamp_flexybayes_koine_abstention(structure(
     list(
       koine = koine::abstention(reason, scope = "synthesis", detail = detail),
       draws = NULL, koine_draws = NULL, fb = fb, data = data,
@@ -47,7 +73,7 @@
                     the_call = the_call)
     ),
     class = c("flexybayes_koine", "list")
-  )
+  ))
 }
 
 # ---- the headline verb: emit the koine fourth opinion -----------------------
@@ -92,7 +118,13 @@
 #'   (`"contributed"` or `"abstained"`), the canonicalised `draws`, the koine
 #'   `koine` result, the `fb` IR, and an `extras` record (stacking weights,
 #'   stacked ELPD, independence and diagnostics on the contributed path; the
-#'   refusal reason and detail on the abstained path).
+#'   refusal reason and detail on the abstained path). On the abstained path
+#'   the object's class additionally carries `"flexyBayesOrchestra_abstention"`
+#'   and `"orchestra_refusal"` prepended ahead of `"flexybayes_koine"`, so a
+#'   producer-agnostic decline predicate (any class ending in `_refusal` /
+#'   `_abstention`, or the `orchestra_refusal` marker) recognises the outer
+#'   object without inspecting `$koine`; `inherits(x, "flexybayes_koine")` and
+#'   every `*.flexybayes_koine` method still dispatch unchanged.
 #'
 #' @seealso [koine_status()] for the activation state; [flexyBayes::triangulate()]
 #'   for the consumption seam.
@@ -191,14 +223,14 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
   )
 
   if (koine::is_abstention(res)) {
-    return(structure(list(
+    return(.stamp_flexybayes_koine_abstention(structure(list(
       koine = res, draws = NULL, koine_draws = NULL, fb = fb, data = data,
       status = "abstained",
       extras = list(status = "abstained", reason = res$reason,
                     detail = res$detail, model_info = model_info,
                     run_time = elapsed,
                     the_call = the_call, formula = ff)),
-      class = c("flexybayes_koine", "list")))
+      class = c("flexybayes_koine", "list"))))
   }
 
   draws <- .koine_canonicalise_draws(

@@ -1,5 +1,20 @@
 # flexyBayesOrchestra (development version)
 
+* **`emit_koine()`'s abstained exit now stamps the outer wrapper as a
+  dispatchable orchestra decline.** The returned `flexybayes_koine` object
+  already carried a real, correctly-typed nested `koine_abstention` at
+  `$koine` whenever koine's corner or convergence gate declined a model, but
+  the OUTER object -- what a caller (and ORCHESTRA_dev's fleet refusal-contract
+  gate, `is_orchestra_decline()`) actually holds -- was always plain
+  `c("flexybayes_koine", "list")`, invisible to any predicate keyed on a
+  `_refusal` / `_abstention` class suffix or the `orchestra_refusal` marker.
+  The abstained exit now prepends `c("flexyBayesOrchestra_abstention",
+  "orchestra_refusal")` to that class vector; a contributed fit is unchanged.
+  Existing consumers are unaffected: `inherits(x, "flexybayes_koine")`,
+  `is.list(x)`, and every `*.flexybayes_koine` S3 method still dispatch, since
+  S3 method lookup scans the whole class vector and `"flexybayes_koine"` is
+  still present, just no longer first. WHAT is refused is unchanged -- only
+  HOW the abstained case is signalled to a class-based predicate.
 * **`emit_koine()` now fits a multi-environment trial instead of abstaining on
   every one (FBO-06).** The capability gate refused any model with more than one
   random term, which matched the single `group` argument the companion drove --

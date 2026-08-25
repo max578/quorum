@@ -259,3 +259,66 @@ test_that("emit_koine() still abstains beyond koine's two-grouping corner", {
   expect_identical(fk$extras$reason, "feature_unsupported")
   expect_true(koine::is_abstention(fk$koine))
 })
+
+
+# ---------------------------------------------------------------- #
+# (8) the outer wrapper is itself dispatchable as an orchestra      #
+#     decline when koine abstained inside it (fleet refusal-contract #
+#     closeout, ORCHESTRA_dev integration/refusal_contract.R)       #
+# ---------------------------------------------------------------- #
+
+# ORCHESTRA_dev's fleet gate (integration/test_refusal_contract.R) calls
+# emit_koine() on a 3-random-term fb_terms and feeds the RETURNED object --
+# what a caller actually holds -- to a producer-agnostic predicate that
+# recognises a class ending in `_refusal` / `_abstention`, or the explicit
+# `orchestra_refusal` marker (integration/refusal_contract.R:99,
+# `is_orchestra_decline()`). Before this fix `emit_koine()`'s abstained exit
+# always returned class `c("flexybayes_koine", "list")` -- the fact that
+# `fk$koine` is itself a real, correctly-typed `koine_abstention` was invisible
+# to that predicate because it only inspects the OUTER class. Re-implemented
+# here (not imported from ORCHESTRA_dev) so this package's own test suite does
+# not depend on a workspace outside it.
+.is_orchestra_decline <- function(x) {
+  cls <- class(x)
+  any(cls == "orchestra_refusal") || any(grepl("_(refusal|abstention)$", cls))
+}
+
+test_that("an abstained emit_koine() result is a dispatchable orchestra decline", {
+  skip_if_not_installed("koine")
+  fb3 <- structure(list(
+    response = "y", family = "gaussian", link = "identity", intercept = TRUE,
+    fixed_terms = list(list(type = "continuous", var = "x")),
+    random_terms = list(
+      list(type = "simple", var = "variety"),
+      list(type = "simple", var = "trial"),
+      list(type = "simple", var = "block")
+    )
+  ), class = "fb_terms")
+  d <- .koine_met_data()
+  d$block <- factor(rep_len(seq_len(4L), nrow(d)))
+  fk <- emit_koine(fb3, d)
+  expect_identical(fk$status, "abstained")
+
+  # the outer wrapper now carries the stamp, prepended ahead of the original
+  # class (so existing `inherits(fk, "flexybayes_koine")` / `class(fk)[2] ==
+  # "list"` consumers are unaffected)
+  expect_identical(
+    class(fk),
+    c("flexyBayesOrchestra_abstention", "orchestra_refusal",
+      "flexybayes_koine", "list")
+  )
+  expect_true(inherits(fk, "flexybayes_koine"))
+  expect_true(is.list(fk))
+  expect_true(.is_orchestra_decline(fk))
+})
+
+test_that("a contributed emit_koine() result carries no abstention stamp", {
+  skip_if_not_installed("koine")
+  skip_if_not_installed("posterior")
+  d <- .koine_test_data()
+  fb <- .koine_test_fb()
+  fk <- emit_koine(fb, d, n_samples = 200L, seed = 7L)
+  skip_if(fk$status != "contributed")
+  expect_identical(class(fk), c("flexybayes_koine", "list"))
+  expect_false(.is_orchestra_decline(fk))
+})
