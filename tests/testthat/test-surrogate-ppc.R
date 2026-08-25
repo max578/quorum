@@ -612,3 +612,37 @@ test_that("whiten composes with project and with aggregate", {
   )
   expect_s3_class(ra, "fb_mmd_agg")
 })
+
+test_that(".mmd_agg() ranks the observed statistic and its permutation replicates against the same pooled null (FBO-07)", {
+  skip_if_not_installed("kernR")
+  # Deterministic regression case for the self-count bug: the per-permutation
+  # p-value (pj) used to rank each permutation replicate against the full B
+  # replicates INCLUDING itself, while the observed statistic's p-value
+  # (p_obs) ranked it against the B replicates EXCLUDING it -- an asymmetric
+  # comparison. The fix ranks every element (observed + all B replicates)
+  # against the pooled set of B + 1 values. Fixed statistics/nulls below
+  # (three bandwidths, nine permutations each) give p_agg = 0.9 under the old
+  # asymmetric ranking and p_agg = 1 under the corrected pooled ranking.
+  set.seed(3L)
+  t_obs <- c(0.40, 0.55, 0.30)
+  nmat <- matrix(stats::rexp(9L * 3L), ncol = 3L)
+  call_i <- 0L
+  testthat::local_mocked_bindings(
+    select_bandwidth = function(...) 1,
+    mmd_test = function(x, y, kernel, n_permutations, seed) {
+      call_i <<- call_i + 1L
+      list(statistic = t_obs[call_i], null_distribution = nmat[, call_i])
+    },
+    .package = "kernR"
+  )
+  res <- flexyBayesOrchestra:::.mmd_agg(
+    x = matrix(0, 1L, 1L),
+    y = matrix(0, 1L, 1L),
+    n_permutations = 9L,
+    alpha = 0.05,
+    seed = NULL,
+    mult = c(1, 2, 3),
+    weights = "uniform"
+  )
+  expect_equal(res$p_value, 1)
+})
