@@ -175,12 +175,28 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
   res <- koine::synthesise(pass, keep_fits = TRUE)
   elapsed <- unname((proc.time() - t0)["elapsed"])
 
+  # The resolved model shape, recorded on BOTH exits: a reader (and the study
+  # harness) must be able to see which koine entry the model was routed
+  # through even when koine's own convergence gate then declined it.
+  model_info <- list(
+    n_obs = nrow(data), n_fixed = ncol(x), groupings = grp_vars,
+    re_structure = if (length(grp_vars) == 2L) {
+      "met"
+    } else if (length(grp_vars) == 1L) {
+      "single_intercept"
+    } else {
+      "population"
+    },
+    family = fb$family, link = fb$link
+  )
+
   if (koine::is_abstention(res)) {
     return(structure(list(
       koine = res, draws = NULL, koine_draws = NULL, fb = fb, data = data,
       status = "abstained",
       extras = list(status = "abstained", reason = res$reason,
-                    detail = res$detail, run_time = elapsed,
+                    detail = res$detail, model_info = model_info,
+                    run_time = elapsed,
                     the_call = the_call, formula = ff)),
       class = c("flexybayes_koine", "list")))
   }
@@ -196,16 +212,7 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
       elpd_stacked = res$opinion$elpd_stacked,
       independence = res$independence,
       diagnostics = res$diagnostics,
-      model_info = list(n_obs = nrow(data), n_fixed = ncol(x),
-                        groupings = grp_vars,
-                        re_structure = if (length(grp_vars) == 2L) {
-                          "met"
-                        } else if (length(grp_vars) == 1L) {
-                          "single_intercept"
-                        } else {
-                          "population"
-                        },
-                        family = fb$family, link = fb$link),
+      model_info = model_info,
       run_time = elapsed, the_call = the_call, formula = ff)),
     class = c("flexybayes_koine", "list"))
 }

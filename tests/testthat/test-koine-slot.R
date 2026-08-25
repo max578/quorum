@@ -197,31 +197,38 @@ test_that("emit_koine() fits a MET and matches koine's own formula entry", {
   d <- .koine_met_data()
   fk <- emit_koine(.koine_met_fb(), d, n_samples = 800L, seed = 3L)
 
-  # the capability gate must no longer refuse a MET before koine is called
+  # the capability gate must no longer refuse a MET before koine is called,
+  # and the model must be recorded as having been routed through the MET entry
   expect_false(identical(fk$extras$reason, "feature_unsupported"))
-  skip_if(
-    !identical(fk$status, "contributed"),
-    "koine's own convergence gate fired on this MET"
-  )
   expect_identical(fk$extras$model_info$re_structure, "met")
   expect_identical(fk$extras$model_info$groupings, c("variety", "trial"))
 
+  # the oracle, fitted independently through koine's own formula entry
+  pass <- koine::koine_pass(
+    y ~ x + (1 | variety) + (1 | trial), d, stats::gaussian(), seed = 3L
+  )
+  res <- koine::synthesise(pass, keep_fits = TRUE)
+
+  if (koine::is_abstention(res)) {
+    # koine's own battery declined this MET in this environment (its PSIS
+    # reliability gate needs two surviving lenses). The companion must then
+    # decline it the same way -- never manufacture a fourth opinion the oracle
+    # itself will not stand behind.
+    expect_identical(fk$status, "abstained")
+    expect_identical(fk$extras$reason, res$reason)
+    return(invisible(NULL))
+  }
+
+  expect_identical(fk$status, "contributed")
   got <- coef(fk)
   # self-naming: koine's tau_<grouping> tokens become flexyBayes's sd_<grouping>
   expect_setequal(
     names(got),
     c("(Intercept)", "x", "sigma", "sd_variety", "sd_trial")
   )
-
-  pass <- koine::koine_pass(
-    y ~ x + (1 | variety) + (1 | trial), d, stats::gaussian(), seed = 3L
-  )
-  res <- koine::synthesise(pass, keep_fits = TRUE)
-  skip_if(koine::is_abstention(res), "koine's formula entry abstained")
   ref <- colMeans(as.matrix(posterior::as_draws_matrix(
     koine::koine_opinion_draws(res, n_draws = 800L)
   )))
-
   expect_equal(unname(got[["(Intercept)"]]), unname(ref[["b_(Intercept)"]]),
                tolerance = 0.15)
   expect_equal(unname(got[["x"]]), unname(ref[["b_x"]]), tolerance = 0.15)
@@ -232,6 +239,7 @@ test_that("emit_koine() fits a MET and matches koine's own formula entry", {
   expect_equal(unname(got[["sd_trial"]]), unname(ref[["tau_trial"]]),
                tolerance = 0.15)
 })
+
 
 test_that("emit_koine() still abstains beyond koine's two-grouping corner", {
   skip_if_not_installed("koine")
