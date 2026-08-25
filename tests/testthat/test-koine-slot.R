@@ -143,3 +143,111 @@ test_that("the legacy koine mapper stub returns the scaffold sentinel", {
   expect_identical(out$source, "scaffold_dormant")
   expect_identical(out$map, character(0))
 })
+
+
+# ---------------------------------------------------------------- #
+# (7) FBO-06: the MET (two-grouping) corner reaches koine 0.3.0     #
+# ---------------------------------------------------------------- #
+
+# The breeder-standard multi-environment trial: a fixed covariate plus two
+# crossed random intercepts, (1 | variety) + (1 | trial). This is the model the
+# study series' statistical lens is built from, and the shape emit_koine() used
+# to refuse at the capability gate before any koine call.
+.koine_met_fb <- function() {
+  structure(list(
+    response = "y", family = "gaussian", link = "identity", intercept = TRUE,
+    fixed_terms = list(list(type = "continuous", var = "x")),
+    random_terms = list(
+      list(type = "simple", var = "variety"),
+      list(type = "simple", var = "trial")
+    )
+  ), class = "fb_terms")
+}
+
+.koine_met_data <- function(seed = 1L, nv = 5L, nt = 4L, nr = 2L) {
+  set.seed(seed)
+  d <- expand.grid(
+    variety = factor(seq_len(nv)),
+    trial = factor(seq_len(nt)),
+    rep = seq_len(nr)
+  )
+  d$x <- stats::rnorm(nrow(d))
+  bv <- stats::rnorm(nv, 0, 0.8)
+  bt <- stats::rnorm(nt, 0, 0.5)
+  d$y <- 0.5 + 0.7 * d$x + bv[as.integer(d$variety)] +
+    bt[as.integer(d$trial)] + stats::rnorm(nrow(d), 0, 0.6)
+  d
+}
+
+# ORACLE: koine 0.3.0's OWN formula entry, koine_pass(y ~ x + (1 | variety) +
+# (1 | trial), ...) -- an entry point authored by koine, not by this package,
+# that fits the same MET directly and independently of the design-array route
+# emit_koine() drives. The expected values are koine's, never this package's.
+# Tolerance: the two routes drive the same battery from the same seed but keep
+# separate RNG streams for the synthesised opinion draws, so posterior means
+# agree only up to Monte-Carlo noise; the observed worst gap over the five
+# parameters was 0.026 (2026-08-25), and 0.15 is set as a ceiling that is an
+# order of magnitude below the parameter scale but well clear of that noise.
+test_that("emit_koine() fits a MET and matches koine's own formula entry", {
+  skip_if_not_installed("koine")
+  skip_if_not_installed("posterior")
+  # deliberately NOT skip_on_cran(): this is the gate that keeps the fourth
+  # opinion available on a MET, and it must run wherever the suite runs. It
+  # costs roughly 40 s (two koine batteries), the price of a real oracle.
+  d <- .koine_met_data()
+  fk <- emit_koine(.koine_met_fb(), d, n_samples = 800L, seed = 3L)
+
+  # the capability gate must no longer refuse a MET before koine is called
+  expect_false(identical(fk$extras$reason, "feature_unsupported"))
+  skip_if(
+    !identical(fk$status, "contributed"),
+    "koine's own convergence gate fired on this MET"
+  )
+  expect_identical(fk$extras$model_info$re_structure, "met")
+  expect_identical(fk$extras$model_info$groupings, c("variety", "trial"))
+
+  got <- coef(fk)
+  # self-naming: koine's tau_<grouping> tokens become flexyBayes's sd_<grouping>
+  expect_setequal(
+    names(got),
+    c("(Intercept)", "x", "sigma", "sd_variety", "sd_trial")
+  )
+
+  pass <- koine::koine_pass(
+    y ~ x + (1 | variety) + (1 | trial), d, stats::gaussian(), seed = 3L
+  )
+  res <- koine::synthesise(pass, keep_fits = TRUE)
+  skip_if(koine::is_abstention(res), "koine's formula entry abstained")
+  ref <- colMeans(as.matrix(posterior::as_draws_matrix(
+    koine::koine_opinion_draws(res, n_draws = 800L)
+  )))
+
+  expect_equal(unname(got[["(Intercept)"]]), unname(ref[["b_(Intercept)"]]),
+               tolerance = 0.15)
+  expect_equal(unname(got[["x"]]), unname(ref[["b_x"]]), tolerance = 0.15)
+  expect_equal(unname(got[["sigma"]]), unname(ref[["sigma"]]),
+               tolerance = 0.15)
+  expect_equal(unname(got[["sd_variety"]]), unname(ref[["tau_variety"]]),
+               tolerance = 0.15)
+  expect_equal(unname(got[["sd_trial"]]), unname(ref[["tau_trial"]]),
+               tolerance = 0.15)
+})
+
+test_that("emit_koine() still abstains beyond koine's two-grouping corner", {
+  skip_if_not_installed("koine")
+  fb3 <- structure(list(
+    response = "y", family = "gaussian", link = "identity", intercept = TRUE,
+    fixed_terms = list(list(type = "continuous", var = "x")),
+    random_terms = list(
+      list(type = "simple", var = "variety"),
+      list(type = "simple", var = "trial"),
+      list(type = "simple", var = "block")
+    )
+  ), class = "fb_terms")
+  d <- .koine_met_data()
+  d$block <- factor(rep_len(seq_len(4L), nrow(d)))
+  fk <- emit_koine(fb3, d)
+  expect_identical(fk$status, "abstained")
+  expect_identical(fk$extras$reason, "feature_unsupported")
+  expect_true(koine::is_abstention(fk$koine))
+})

@@ -28,7 +28,7 @@ Suggests:
     PESTO,
     S7,
     gretaR (>= 0.4.0),
-    koine (>= 0.2.0),
+    koine (>= 0.3.0),
     sommer,
     posterior,
     knitr,

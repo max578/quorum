@@ -104,6 +104,11 @@ koine is `flexyBayes`'s fourth opinion: an independently-derived REML or
 population-GLM fit that `triangulate()` compares against the Bayesian
 backends. Agreement across methods that do not share an inferential engine is
 stronger evidence than agreement within one engine's diagnostics.
+`emit_koine()` carries the model into koine's own corner: a population GLM with
+either a single random intercept or -- from koine 0.3.0 -- the
+multi-environment-trial structure of two crossed or nested random intercepts,
+`(1 | variety) + (1 | trial)`, which is the shape a variety trial actually has.
+Anything richer returns a typed abstention rather than a wrong fourth opinion.
 `koine_status()` reports whether the slot is currently active on the installed
 koine version, without requiring koine to be installed to load this package:
 

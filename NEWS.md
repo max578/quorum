@@ -1,5 +1,20 @@
 # flexyBayesOrchestra (development version)
 
+* **`emit_koine()` now fits a multi-environment trial instead of abstaining on
+  every one (FBO-06).** The capability gate refused any model with more than one
+  random term, which matched the single `group` argument the companion drove --
+  so koine's fourth column was empty on exactly the crossed
+  `(1 | variety) + (1 | trial)` structure the study series' statistical lens is
+  built from. koine 0.3.0 fields that structure through the `groups` argument of
+  `koine_pass_from_design()` (read from the installed namespace, not assumed),
+  and the MET case is now routed there: the gate admits two plain random
+  intercepts, the group SDs koine reports as `tau_<grouping>` canonicalise to
+  `sd_<grouping>`, and `extras$model_info` records the resolved
+  `re_structure`. Below koine 0.3.0 a two-grouping model returns a typed
+  abstention naming the version floor, and more than two groupings (or any
+  non-intercept random term) still abstains before any koine call. `Suggests:`
+  raised to `koine (>= 0.3.0)`; the slot-activation floor stays at 0.2.0, which
+  is still the floor for the single-intercept corner.
 * **The kernR `cme` conformer no longer extrapolates confidently (FBO-01).**
   The conditional-mean smoother's weights decay to zero as a prediction point
   leaves the design, which drove the mean to zero *and* the reported
