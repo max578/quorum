@@ -1,5 +1,20 @@
 # flexyBayesOrchestra (development version)
 
+* **The kernR `cme` conformer no longer extrapolates confidently (FBO-01).**
+  The conditional-mean smoother's weights decay to zero as a prediction point
+  leaves the design, which drove the mean to zero *and* the reported
+  `sigma^2 (1 + ||w||^2)` sd down to its in-design floor -- on the reference
+  design the conformer returned `y_mean = 0.000000, y_sd = 0.298104` at
+  `(a, b) = (12, 12)` against a true `71.463427`, the same sd it reports in the
+  middle of the design. The conformer now records the smoother's weight mass
+  across the training design at fit time and raises a classed
+  `fb_surrogate_cme_abstention` condition (the `_abstention` suffix the
+  constellation's shared decline predicate keys on) wherever the mass falls
+  below `weight_mass_frac` (default 0.5) times the least-supported design
+  point's mass, naming the reference `rff` surrogate as the extrapolation
+  fallback. The floor is tunable at fit time (`weight_mass_frac`,
+  `weight_mass_floor`) and per call (`weight_mass_floor`), and setting it to 0
+  restores the ungated behaviour deliberately.
 * **`%||%` defined locally (FBO-03).** The infix was used nine times across
   `R/` but defined nowhere in the package and imported from nowhere, so it
   resolved only via `base::%||%` -- absent below R 4.4.0, against a declared

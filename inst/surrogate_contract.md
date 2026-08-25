@@ -81,6 +81,21 @@ on scale -- a conformer must not re-standardise.
 | **PESTO** | `gp` | `train_gp_surrogate()` / `predict_gp_surrogate()` already report a per-output predictive `$mean` **and** `$variance`, so the adapter maps them straight onto `<o>_mean` / `<o>_sd = sqrt(variance)`. Registered by `register_pesto_surrogates()`. (PESTO's `rff` surrogate returns only an aggregate `$uncertainty`, not per-output variance, so it is not registered.) |
 | **kernR** | `cme` | `fit_cme()` is a kernel linear smoother: it yields the conditional *mean* `y_hat(x*) = w(x*)' y` but **no** predictive variance. The adapter supplies the standard linear-smoother predictive variance `sigma^2 (1 + ||w(x*)||^2)` (with `sigma^2 = RSS / (n - tr(S))` from the in-sample smoother), so `<o>_sd` is honest. The conditional-mean map stays kernR's; only the UQ is added. Registered by `register_kernr_surrogates()`. (`dist_regression()` takes distributional *bag* inputs, not a parameter design, so it is not a C7 surrogate.) |
 
+**Out-of-support abstention (clause 2a).** A conformer whose `<o>_sd` does not
+widen off-design must refuse there rather than report an in-design-sized
+uncertainty on an extrapolated mean. The `cme` conformer is the case in point:
+its weights `w(x*)` are an approximate partition of unity on the design, and as
+`x*` leaves the design every `k(x*, x_i)` decays to zero, so `sum(w(x*))` and
+`||w(x*)||^2` both decay to zero -- driving the mean to zero and the reported sd
+*down* to `sqrt(sigma^2)`. It therefore records the weight mass across the
+training design at fit time and raises a classed `fb_surrogate_cme_abstention`
+condition (recognised by the constellation's shared
+`is_orchestra_decline()` predicate, which keys on the `_abstention` class
+suffix) wherever the mass falls below `weight_mass_frac` (default 0.5) times the
+least-supported design point's mass. The named fallback for extrapolation is the
+reference `rff` surrogate, whose evidence-calibrated variance widens toward the
+prior off-design.
+
 Both sibling adapters live in flexyBayesOrchestra (`R/surrogate_conformers.R`), are
 `requireNamespace`-gated, and are registered opportunistically from `.onLoad`
 when the member is installed -- so `method = "gp"` / `"cme"` simply works when the

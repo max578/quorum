@@ -119,3 +119,72 @@ test_that("registration is idempotent and conformer predict is deterministic", {
   nd <- data.frame(a = c(0, 0.5), b = c(-0.5, 1.0))
   expect_equal(predict(s1, nd), predict(s2, nd))
 })
+
+# ---- FBO-01: the CME conformer must not be confident off-design -------------
+#
+# ORACLE (independent of the code under test, two sources):
+#   (a) the closed-form generating surface `.conformer_truth()` -- the analytic
+#       value the emulator would have to reproduce at the probe point;
+#   (b) the analytic limit of a kernel linear smoother: with a bounded, decaying
+#       kernel every k(x*, x_i) -> 0 as x* leaves the design, so the weights
+#       w(x*) -> 0, the mean w(x*)'y -> 0, and ||w(x*)||^2 -> 0, which drives
+#       sigma^2 (1 + ||w||^2) DOWN to its in-design floor sigma^2. The reported
+#       sd therefore shrinks toward its in-design size exactly where the mean is
+#       worthless (Wasserman, "All of Nonparametric Statistics", 2006, ch. 5,
+#       linear smoothers; Hastie, Tibshirani & Friedman, ESL 2nd ed., sec 5.4).
+# Neither expected value is read off this package's output.
+
+test_that("the CME conformer declines off-design instead of guessing", {
+  skip_if_not_installed("kernR")
+  register_kernr_surrogates()
+  e <- .mk_conformer_train(noise = 0.05)
+  s <- fit_surrogate(e, method = "cme", lambda = 1e-2)
+
+  # A point six design half-widths outside the [-2, 2]^2 design.
+  far <- data.frame(a = 12, b = 12)
+  expect_gt(abs(.conformer_truth(12, 12)), 50) # the truth is nowhere near 0
+  cnd <- tryCatch(predict(s, far), condition = function(cnd) cnd)
+  expect_s3_class(cnd, "fb_surrogate_cme_abstention")
+  # the constellation's shared decline predicate keys on this suffix
+  expect_true(any(grepl("_abstention$", class(cnd))))
+  expect_lt(cnd$weight_mass, cnd$weight_mass_floor)
+  expect_true(all(is.finite(cnd$mass_design_range)))
+})
+
+test_that("the CME gate leaves in-design prediction untouched", {
+  skip_if_not_installed("kernR")
+  register_kernr_surrogates()
+  e <- .mk_conformer_train(noise = 0.05)
+  s <- fit_surrogate(e, method = "cme", lambda = 1e-2)
+  set.seed(11L)
+  grid <- data.frame(
+    a = stats::runif(120, -1.6, 1.6),
+    b = stats::runif(120, -1.6, 1.6)
+  )
+  pr <- predict(s, grid)
+  expect_identical(nrow(pr), 120L)
+  expect_true(all(is.finite(pr$y_sd)))
+  truth <- .conformer_truth(grid$a, grid$b)
+  expect_lt(sqrt(mean((pr$y_mean - truth)^2)), 0.35)
+})
+
+test_that("the CME out-of-support floor is tunable and can be disabled", {
+  skip_if_not_installed("kernR")
+  register_kernr_surrogates()
+  e <- .mk_conformer_train(noise = 0.05)
+  far <- data.frame(a = 12, b = 12)
+
+  # floor 0 disables the gate: the ungated answer is recoverable, and it is the
+  # fabrication the gate exists to stop -- a near-zero mean against a truth
+  # above 50, carried at an in-design-sized sd.
+  open_s <- fit_surrogate(e, method = "cme", lambda = 1e-2, weight_mass_frac = 0)
+  pr <- predict(open_s, far)
+  expect_lt(abs(pr$y_mean), 1e-3)
+  expect_gt(abs(.conformer_truth(12, 12) - pr$y_mean), 50)
+
+  # a per-call floor override reinstates the refusal on that same fit
+  expect_error(
+    predict(open_s, far, weight_mass_floor = 0.1),
+    class = "fb_surrogate_cme_abstention"
+  )
+})
