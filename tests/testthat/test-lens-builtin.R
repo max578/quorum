@@ -233,7 +233,7 @@ test_that("lens_from_fit canonicalises a real INLA fit's draw names", {
   expect_equal(S7::prop(l, "kind"), "parameters")
   expect_equal(unname(S7::prop(l, "shares")[["objective"]]), "inla")
   expect_equal(unname(S7::prop(l, "shares")[["sampler"]]), "laplace")
-  expect_equal(unname(S7::prop(l, "shares")[["priors"]]), "koine_scaled")
+  expect_equal(unname(S7::prop(l, "shares")[["priors"]]), "hub_inla_default")
   expect_equal(unname(S7::prop(l, "shares")[["data_prep"]]), "hub")
 
   d <- S7::prop(l, "fit")(NULL, NULL)

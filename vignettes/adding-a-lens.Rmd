@@ -157,7 +157,7 @@ cat("The independence ledger needs both lenses fitted above; it is",
 
 Both lenses declare every one of the four components differently -- a
 Laplace sampler against Stan's NUTS, the TMB objective against INLA's own,
-a hub-matched gamma prior against the hub's own interlingua, and quorum's
+a hub-matched gamma prior against INLA's default fixed-effect prior as the hub applies it, and quorum's
 own data preparation against the hub's -- so the ledger gives the pair the
 full evidential weight of 1: nothing about their agreement can be explained
 by something they share.

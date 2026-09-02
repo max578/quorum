@@ -35,8 +35,14 @@
 # The two hub-wide components, filled in around a per-engine sampler and
 # objective.
 .hub_shares <- function(sampler, objective) {
+  # The hub's INLA path passes no `control.fixed` unless the caller sets
+  # `prior_fixed_sd`, so INLA's own default fixed-effect prior applies
+  # (precision 0.001, an informative N(0, 31.6^2) on a coefficient measured in
+  # tens); the brms path carries the hub's prior interlingua. The two engines
+  # therefore do not share a prior and must not be weighted as if they did.
+  priors <- if (identical(objective, "inla")) "hub_inla_default" else .HUB_PRIORS
   c(sampler = sampler, objective = objective,
-    priors = .HUB_PRIORS, data_prep = .HUB_DATA_PREP)
+    priors = priors, data_prep = .HUB_DATA_PREP)
 }
 
 # The koine wrapper is not a hub fit: its opinion is a stacking mixture over
