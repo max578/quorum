@@ -1,5 +1,7 @@
 # flexyBayesOrchestra (development version)
 
+* Relicensed from GPL (>= 3) to MIT (orchestra-wide licence unification, 2026-09-02). No code change.
+
 * **`emit_koine()`'s abstained exit now stamps the outer wrapper as a
   dispatchable orchestra decline.** The returned `flexybayes_koine` object
   already carried a real, correctly-typed nested `koine_abstention` at

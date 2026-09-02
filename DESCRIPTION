@@ -13,7 +13,7 @@ Description: Companion to the 'flexyBayes' Bayesian mixed-model engine that
     and the koine fourth-opinion lens-axis backend for triangulation. Depends
     on 'flexyBayes' for the core model representation and emits results in the
     same shapes.
-License: GPL (>= 3)
+License: MIT + file LICENSE
 URL: https://github.com/max578/flexyBayesOrchestra,
     https://max578.github.io/flexyBayesOrchestra/
 BugReports: https://github.com/max578/flexyBayesOrchestra/issues

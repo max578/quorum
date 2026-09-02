@@ -61,4 +61,4 @@ predict(sur, data.frame(p1 = 1, p2 = -1))
 
 ## License
 
-GPL (\>= 3) — matching the `flexyBayes` core it imports.
+MIT — matching the `flexyBayes` core it imports.
