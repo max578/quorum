@@ -47,5 +47,5 @@ cat(ks$activation_procedure, sep = "\n")
 
 }
 \seealso{
-\code{\link[=gretaR_status]{gretaR_status()}} for the engine-axis sibling slot.
+\code{gretaR_status()} (withdrawn from the hub in 0.10.0) for the engine-axis sibling slot.
 }

@@ -1,0 +1,333 @@
+---
+title: "Adding a lens"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding a lens}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<!-- Render time: ~30 s under rmarkdown::render() with glmmTMB, tmbstan and
+     INLA all installed (dominated by the two sampler calls); a build
+     missing one or more of those three renders in a few seconds instead.
+     macOS arm64, R 4.5.1, one core. -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 150
+)
+```
+
+```{r library}
+library(quorum)
+```
+
+## Why
+
+A colleague has just produced a second fit of the same mixed model, this
+time from glmmTMB's Laplace approximation rather than the hub's INLA
+backend. Before the two can stand side by side in a quorum, each has to say
+what it shares with the other and what it does not -- otherwise "the two
+lenses agree" could mean nothing more than "the two lenses share a sampler".
+This vignette builds that declaration from the ground up: what a lens must
+say about itself, how much two lenses actually share once they say it, and
+how far apart their posteriors sit once the sharing is accounted for.
+
+## What
+
+A `quorum_lens()` (built with `lens()`) is a member's fitter behind three
+declarations. `shares` names what the lens has in common with every other
+lens across four components -- `sampler`, `objective`, `priors` and
+`data_prep` -- and is what `quorum_independence()` reads to weigh an
+agreement. `expresses` names the response shapes the lens can represent
+(`linear`, `plateau`, `threshold`, `nonmonotone`). `scope` is a gate: a
+function of the specification that returns `TRUE` inside the lens's corner
+and a `quorum_abstention()` outside it, so a model the lens cannot field is
+declined rather than mis-fitted. Its `fit(spec, data, ...)` returns a
+`quorum_draws()` -- a named list of numeric draws, one vector per parameter,
+for a lens of kind `"parameters"` -- or a `quorum_abstention()` when it
+cannot answer this particular model. `agreement_pairwise()` compares two
+lenses' draws component by component; `quorum()` is the front door that
+gates, fits, compares and resolves a whole quorum of lenses at once.
+
+## Do
+
+### Engines available on this build
+
+Two of this vignette's sections need an optional engine each: `lens_tmb()`
+needs `glmmTMB` and `tmbstan`, and the hub comparison needs `INLA` through
+`flexyBayes::flexybayes()`. Each guarded chunk below checks for its own
+engine and prints one sentence in its place when the engine is absent, so the
+vignette still renders -- with less to read -- on a build that carries
+neither.
+
+```{r engines}
+has_tmb <- requireNamespace("glmmTMB", quietly = TRUE) &&
+  requireNamespace("tmbstan", quietly = TRUE)
+has_inla <- requireNamespace("INLA", quietly = TRUE)
+has_ggplot2 <- requireNamespace("ggplot2", quietly = TRUE)
+engines_ok <- has_tmb && has_inla
+```
+
+### A tiny synthetic toy
+
+A synthetic Gaussian random-intercept toy: 60 observations in 6 groups, an
+intercept of 2, and a group-level SD of 0.8, seeded for reproducibility. Real
+data would work the same way; the toy exists only to keep both fits fast.
+
+```{r toy}
+set.seed(20260902)
+n <- 60L
+n_groups <- 6L
+g <- factor(rep(seq_len(n_groups), each = n / n_groups))
+u <- rnorm(n_groups, 0, 0.8)
+data_toy <- data.frame(y = 2 + u[as.integer(g)] + rnorm(n, 0, 1), g = g)
+head(data_toy)
+```
+
+### A worked TMB lens
+
+`lens_tmb()` fits glmmTMB's Laplace-approximated marginal likelihood and
+then samples the very TMB objective that fit produced with `tmbstan`'s NUTS
+sampler -- a second Laplace family distinct from INLA's, and one objective
+sampled two ways. The call below keeps the chain count and iteration count
+small, which is enough for a toy this size and is exactly what keeps this
+vignette fast.
+
+```{r tmb-lens, eval = has_tmb, echo = has_tmb}
+tmb_lens <- lens_tmb(chains = 2L, iter = 1000L)
+tmb_draws <- tmb_lens@fit(y ~ 1 + (1 | g), data_toy)
+tmb_draws@source
+names(tmb_draws@draws)
+```
+
+```{r tmb-lens-skip, eval = !has_tmb, echo = FALSE, results = "asis"}
+cat("glmmTMB and/or tmbstan are not installed on this build, so the TMB",
+    "lens is not fitted here.\n")
+```
+
+### A second lens from the hub
+
+`lens_from_fit()` wraps a model somebody has already fitted -- here, the
+hub's own INLA backend on the identical formula -- and canonicalises its
+draws onto the same parameter names the TMB lens uses, so the two are
+comparable component by component with no relabelling step.
+
+```{r hub-lens, eval = has_inla, echo = has_inla}
+withr::local_options(list(flexyBayes.silence_default_prior_note = TRUE))
+hub_fit <- flexyBayes::flexybayes(
+  y ~ 1 + (1 | g), data = data_toy, backend = "inla", verbose = FALSE,
+  seed = 1L
+)
+hub_lens <- lens_from_fit(hub_fit, name = "inla")
+hub_draws <- hub_lens@fit(NULL, NULL)
+names(hub_draws@draws)
+```
+
+```{r hub-lens-skip, eval = !has_inla, echo = FALSE, results = "asis"}
+cat("INLA is not installed on this build, so the hub comparison lens is",
+    "not fitted here.\n")
+```
+
+### How much the two lenses actually share
+
+```{r independence, eval = engines_ok, echo = engines_ok}
+ind <- quorum_independence(list(tmb_lens, hub_lens))
+ind
+```
+
+```{r independence-kable, echo = FALSE, eval = engines_ok}
+knitr::kable(
+  round(ind$weight, 2),
+  caption = paste0(
+    "Evidential weight between the TMB and INLA lenses (1 = shares ",
+    "nothing, 0 = shares everything)."
+  )
+)
+```
+
+```{r independence-skip, eval = !engines_ok, echo = FALSE, results = "asis"}
+cat("The independence ledger needs both lenses fitted above; it is",
+    "skipped when either engine is absent.\n")
+```
+
+Both lenses declare every one of the four components differently -- a
+Laplace sampler against Stan's NUTS, the TMB objective against INLA's own,
+a hub-matched gamma prior against the hub's own interlingua, and quorum's
+own data preparation against the hub's -- so the ledger gives the pair the
+full evidential weight of 1: nothing about their agreement can be explained
+by something they share.
+
+### How far apart their posteriors sit
+
+```{r agreement, eval = engines_ok, echo = engines_ok}
+agree <- agreement_pairwise(tmb_draws, hub_draws)
+agree
+```
+
+```{r agreement-kable, echo = FALSE, eval = engines_ok}
+knitr::kable(
+  agree[, c("param", "mean_a", "mean_b", "sd_ratio", "w1_sd", "verdict")],
+  digits = 3,
+  caption = paste0(
+    "Per-component agreement, TMB lens (a) against the hub's INLA lens (b)."
+  )
+)
+```
+
+```{r agreement-skip, eval = !engines_ok, echo = FALSE, results = "asis"}
+cat("The agreement table needs both lenses fitted above; it is skipped",
+    "when either engine is absent.\n")
+```
+
+### Figure: the two posteriors, overlaid
+
+```{r fig-overlay, eval = engines_ok && has_ggplot2, fig.cap = "Posterior density of the intercept under the TMB lens (NUTS over the TMB objective) and the hub's INLA lens, on the same synthetic toy. The subtitle carries the Wasserstein-1 distance between the two, in reference-SD units, from the agreement table above."}
+w1_intercept <- agree$w1_sd[agree$param == "(Intercept)"]
+overlay_df <- rbind(
+  data.frame(value = tmb_draws@draws[["(Intercept)"]], lens = "tmb"),
+  data.frame(value = hub_draws@draws[["(Intercept)"]], lens = "inla")
+)
+ggplot2::ggplot(overlay_df, ggplot2::aes(x = value, fill = lens)) +
+  ggplot2::geom_density(alpha = 0.5) +
+  ggplot2::scale_fill_viridis_d(name = "lens") +
+  ggplot2::labs(
+    x = "(Intercept)", y = "posterior density",
+    title = "Posterior overlay: (Intercept)",
+    subtitle = sprintf(
+      "Wasserstein-1 distance = %.2f reference SD", w1_intercept
+    )
+  ) +
+  ggplot2::theme_minimal()
+```
+
+```{r fig-overlay-skip, eval = !(engines_ok && has_ggplot2), echo = FALSE, results = "asis"}
+cat("The posterior overlay needs both lenses fitted and ggplot2",
+    "installed; it is skipped when any of the three is absent.\n")
+```
+
+### Comparing the two lenses through the front door
+
+```{r quorum-call, eval = engines_ok, echo = engines_ok}
+verdict <- quorum(
+  list(tmb_lens, hub_lens), spec = y ~ 1 + (1 | g), data = data_toy,
+  policy = quorum_policy(order = c("inla", "tmb"), min_lenses = 2L)
+)
+verdict
+```
+
+```{r quorum-call-skip, eval = !engines_ok, echo = FALSE, results = "asis"}
+cat("The quorum() call needs both lenses fitted above; it is skipped",
+    "when either engine is absent.\n")
+```
+
+### Writing your own adapter
+
+A lens needs no engine at all -- only a `fit()` that returns a
+`quorum_draws()` or a `quorum_abstention()`, and the three declarations
+that say what the estimate is worth alongside another lens's. The toy below
+moment-matches a Gaussian to the sample mean of `data$y` and declares that it
+shares nothing with any engine-backed lens, because it genuinely does not.
+
+```{r custom-lens}
+my_fit <- function(spec, data, ...) {
+  quorum_draws(
+    list(`(Intercept)` = rnorm(200L, mean(data$y), 1)),
+    source = "moment_matched"
+  )
+}
+my_lens <- lens(
+  name = "toy_moment_match", member = "example", fit = my_fit,
+  shares = c(sampler = "none", objective = "moment_matching",
+            priors = "none", data_prep = "quorum"),
+  expresses = "linear"
+)
+my_lens@fit(NULL, data_toy)
+```
+
+Every built-in lens names its parameter draws on one shared vocabulary, so
+that any two lenses -- however different their engines -- line up component
+by component with no relabelling: `"(Intercept)"` for the intercept,
+the model-matrix column name for every other fixed-effect coefficient,
+`"sigma"` for the residual standard deviation, and `"sd_<group>"` for the
+standard deviation of a random intercept on grouping variable `<group>`. A
+new adapter that wants to sit alongside the built-in lenses names its own
+draws on that same vocabulary; a lens that reports a component under any
+other name simply will not be found by `agreement_pairwise()` when it looks
+for what the two lenses have in common.
+
+## Read
+
+```{r read-prep, echo = FALSE}
+read_w1 <- if (engines_ok) round(w1_intercept, 2L) else NA_real_
+read_verdict <- if (engines_ok) verdict@status else NA_character_
+read_carried <- if (engines_ok) {
+  verdict@resolution$carried_lens[1L]
+} else {
+  NA_character_
+}
+```
+
+```{r read-text, echo = FALSE, results = "asis"}
+if (engines_ok) {
+  cat(
+    "On this run the intercept sits", read_w1,
+    "reference SDs apart under the Wasserstein-1 distance, and the",
+    "pair's overall verdict is", paste0("`", read_verdict, "`."),
+    "The front door carries the", paste0("`", read_carried, "`"),
+    "lens's answer regardless -- `quorum()` compares lenses, it never",
+    "prices a decision, so with no `decide` argument the carried answer",
+    "is `NA` and only the comparison itself is reported. Two lenses that",
+    "share nothing can still disagree: independence is what makes an",
+    "agreement worth something, not a guarantee that one will be found.",
+    "The random-intercept SD (`sd_g`) is the harder component here, which",
+    "is expected on a toy this small -- six groups leave little",
+    "information for a variance component, and the Laplace",
+    "approximation underlying the TMB lens is at its least reliable",
+    "exactly there.\n"
+  )
+} else {
+  cat(
+    "glmmTMB, tmbstan or INLA is not installed on this build, so the",
+    "comparison above did not run; the sections marked skipped state",
+    "which engine was missing.\n"
+  )
+}
+```
+
+## Limits
+
+This toy is synthetic and deliberately small, chosen to keep both samplers
+fast rather than to stress either engine: six groups is too few to identify
+a random-intercept SD precisely under any method, which is part of why that
+component agrees less well than the intercept above. The independence
+ledger reads only what a lens declares about itself; it cannot discover an
+undeclared dependency, so a lens that mis-states its own `shares` will mislead
+the ledger in a way no computation here can catch. Agreement between two
+lenses fitted to the same data, as both are here, is agreement about that
+dataset, not independent corroboration of the fact behind it -- the caveat
+`quorum_independence()` attaches to every such pair says so explicitly, and
+it is not repeated numerically in this vignette's figure or tables.
+
+## What to read next
+
+*A quorum of lenses on Study A0* applies the front door to 200 recorded
+decision cells and generalises the two-lens cascade this vignette's `quorum()`
+call is a miniature of. *Getting started with quorum* introduces the three
+on-ramps -- ensemble ingestion, surrogate emulation, and the koine fourth
+opinion -- that turn a non-hub estimate into a lens without writing an
+adapter like the one built here.
+
+## Reproduce
+
+Seed `20260902` for the synthetic toy; `seed = 1L` inside `lens_tmb()`'s
+default and passed explicitly to `flexyBayes::flexybayes()`. Package
+versions follow.
+
+```{r session-info}
+sessionInfo()
+```

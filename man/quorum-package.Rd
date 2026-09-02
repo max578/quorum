@@ -2,7 +2,6 @@
 % Please edit documentation in R/quorum-package.R
 \docType{package}
 \name{quorum-package}
-\alias{quorum}
 \alias{quorum-package}
 \title{quorum: The Orchestra's Consensus Layer}
 \description{

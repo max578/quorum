@@ -14,7 +14,7 @@
 # synthesises one opinion over koine's OWN battery (koine::synthesise -- a single
 # independent witness on the lens axis, never a pool across the engine-axis
 # backends; C3 + koine charter), and returns it as a draws-bearing
-# `flexybayes_koine` object -- or an honest abstained object (the "fourth column
+# `flexybayes_koine` object -- or a typed abstained object (the "fourth column
 # = abstained" when koine cannot add diversity).
 #
 # koine's corner widened at 0.3.0: as well as a population GLM and a single
@@ -42,7 +42,7 @@
 # ending in `_refusal` / `_abstention`, or the explicit `orchestra_refusal`
 # marker, but it only ever inspects the OUTER object a caller actually holds.
 # `emit_koine()`'s abstained exit already carries a real, correctly-typed
-# nested `koine_abstention` at `$koine` -- koine's own honest decline -- but
+# nested `koine_abstention` at `$koine` -- koine's own typed decline -- but
 # the outer wrapper itself was always plain `c("flexybayes_koine", "list")`,
 # invisible to that predicate. Stamping `"quorum_abstention"`
 # (this package's own member-specific suffix, matching every other member's
@@ -58,7 +58,7 @@
   x
 }
 
-# Mint the honest fourth column: a typed `flexybayes_koine` carrying koine's own
+# Mint the typed fourth column: a typed `flexybayes_koine` carrying koine's own
 # abstention out of koine's corner, never a silently wrong opinion. The outer
 # wrapper is itself stamped as an orchestra decline (see
 # `.stamp_flexybayes_koine_abstention()`), so a fleet-level gate sees it
@@ -96,7 +96,7 @@
 #' from the data. Outside that corner -- more than two groupings, a random
 #' slope, a correlated random structure, koine below 0.3.0 on a two-grouping
 #' model -- or whenever koine's own convergence gate fires, the returned object
-#' carries `status = "abstained"`, the honest fourth column. The synthesised
+#' carries `status = "abstained"`, the typed fourth column. The synthesised
 #' opinion is a stacking mixture over koine's battery, an independent witness on
 #' the orthogonal lens axis, never a pool across the engine-axis backends.
 #'
@@ -112,6 +112,17 @@
 #' @param seed Integer RNG seed, pinned for reproducibility regardless of caller
 #'   RNG state.
 #' @param the_call Optional originating call, carried into the fit's extras.
+#' @param standardise Logical. koine's random-effects lenses carry a fixed
+#'   N(0, 5) prior on every coefficient and lognormal(0, 2) priors on the
+#'   residual and group SDs, which the pass-level prior does not reach. On a
+#'   response measured in the hundreds that prior dominates the opinion: the
+#'   intercept is pulled toward zero and the group SD absorbs the offset. With
+#'   `standardise = TRUE` (the default) the Gaussian response is centred and
+#'   scaled and every non-intercept covariate is scaled to unit SD before
+#'   koine fits, and the draws are mapped back to the original scale
+#'   afterwards, so the same prior becomes a scale-aware weakly-informative
+#'   one; the fit declares `prior = "koine_scaled"` in its extras. With
+#'   `FALSE` koine fits the data as given and declares `"koine_default"`.
 #' @param ... Reserved for future use.
 #'
 #' @return A `flexybayes_koine` object: a list with `status`
@@ -130,7 +141,7 @@
 #'   for the consumption seam.
 #' @export
 emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
-                       the_call = NULL, ...) {
+                       the_call = NULL, standardise = TRUE, ...) {
   if (!inherits(fb, "fb_terms")) {
     stop("`fb` must be an fb_terms object (the `$fb` of a flexyBayes fit).",
          call. = FALSE)
@@ -142,8 +153,8 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
 
   # Capability gate -- koine fields a population GLM with either a single random
   # intercept (1 | g) or, from 0.3.0, the MET structure of two crossed / nested
-  # random intercepts. A richer random structure is out of corner; abstain
-  # honestly before any koine call (never a silent wrong fourth opinion).
+  # random intercepts. A richer random structure is out of corner; abstain,
+  # typed, before any koine call (never a silent wrong fourth opinion).
   n_re <- length(fb$random_terms)
   re_ok <- n_re <= .KOINE_MAX_GROUPINGS &&
     (n_re == 0L ||
@@ -200,10 +211,14 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
   # caller's RNG state; koine's per-lens seeds derive from the pass seed, but a
   # belt-and-braces set.seed here guarantees determinism even if a lens leaks
   # global RNG.
+  scaling <- .koine_scaling(x, y, fb$family, standardise)
+  x_fit <- sweep(x, 2L, scaling$x_scale, "/")
+  y_fit <- (y - scaling$y_center) / scaling$y_scale
   t0 <- proc.time()
   set.seed(seed)
-  pass <- koine::koine_pass_from_design(x, y, fb$family, group = group,
-                                        groups = groups, seed = seed)
+  pass <- koine::koine_pass_from_design(x_fit, y_fit, fb$family,
+                                        group = group, groups = groups,
+                                        seed = seed)
   res <- koine::synthesise(pass, keep_fits = TRUE)
   elapsed <- unname((proc.time() - t0)["elapsed"])
 
@@ -235,11 +250,14 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
 
   draws <- .koine_canonicalise_draws(
     koine::koine_opinion_draws(res, n_draws = n_samples), fb)
+  draws <- .koine_unscale_draws(draws, scaling)
   structure(list(
     koine = res, draws = draws, koine_draws = draws, fb = fb, data = data,
     status = "contributed",
     extras = list(
       status = "contributed",
+      prior = if (isTRUE(standardise)) "koine_scaled" else "koine_default",
+      scaling = scaling,
       weights = res$opinion$weights,
       elpd_stacked = res$opinion$elpd_stacked,
       independence = res$independence,
@@ -271,6 +289,57 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
     }
   }, character(1))
   dimnames(draws)[[3L]] <- unname(canon)
+  draws
+}
+
+# Scale awareness for koine's fixed priors. Returns the centring and scaling
+# applied before the fit: the Gaussian response is centred on its mean and
+# scaled by its SD; every non-intercept covariate with positive spread is
+# scaled by its SD; nothing is centred on the covariate side, so the intercept
+# keeps its meaning. Other families keep the response as given (the
+# coefficients live on the link scale).
+.koine_scaling <- function(x, y, family, standardise) {
+  fam <- if (is.list(family)) family$family else family
+  fam <- if (is.null(fam)) "gaussian" else as.character(fam)[1L]
+  x_scale <- stats::setNames(rep(1, ncol(x)), colnames(x))
+  y_center <- 0
+  y_scale <- 1
+  if (isTRUE(standardise)) {
+    if (identical(fam, "gaussian")) {
+      y_center <- mean(y)
+      s_y <- stats::sd(y)
+      if (is.finite(s_y) && s_y > 0) y_scale <- s_y
+    }
+    for (j in seq_len(ncol(x))) {
+      if (identical(colnames(x)[j], "(Intercept)")) next
+      s_x <- stats::sd(x[, j])
+      if (is.finite(s_x) && s_x > 0) x_scale[[j]] <- s_x
+    } # ends j, over the design columns
+  }
+  list(y_center = y_center, y_scale = y_scale, x_scale = x_scale)
+}
+
+# Map the canonical draws fitted on the standardised design back to the
+# original scale: intercept = centre + scale * b0; a covariate coefficient =
+# scale * b / sd(x); the residual and group SDs = scale * SD. A canonical name
+# the design does not carry is a mapping defect and stops rather than passing
+# an unscaled draw through as if it were on the original scale.
+.koine_unscale_draws <- function(draws, scaling) {
+  vars <- dimnames(draws)[[3L]]
+  for (k in seq_along(vars)) {
+    v <- vars[k]
+    if (identical(v, "(Intercept)")) {
+      draws[, , k] <- scaling$y_center + scaling$y_scale * draws[, , k]
+    } else if (identical(v, "sigma") || startsWith(v, "sd_")) {
+      draws[, , k] <- scaling$y_scale * draws[, , k]
+    } else {
+      if (!v %in% names(scaling$x_scale)) {
+        stop("emit_koine(): draw `", v, "` has no design column to unscale ",
+             "by.", call. = FALSE)
+      }
+      draws[, , k] <- scaling$y_scale * draws[, , k] / scaling$x_scale[[v]]
+    }
+  } # ends k, over the canonical draw variables
   draws
 }
 

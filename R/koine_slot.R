@@ -182,7 +182,7 @@
 #' ks$dormancy_reason   # "koine_dispatch_eligible" when active
 #' cat(ks$activation_procedure, sep = "\n")
 #'
-#' @seealso [gretaR_status()] for the engine-axis sibling slot.
+#' @seealso `gretaR_status()` (withdrawn from the hub in 0.10.0) for the engine-axis sibling slot.
 #' @export
 koine_status <- function() {
   installed <- nzchar(system.file(package = "koine"))

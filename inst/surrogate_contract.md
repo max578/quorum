@@ -43,7 +43,7 @@ a surrogate.
    (`k x k x nrow(newdata)`). A surrogate that models only marginals (an
    independent `rff`, or a conformer reporting only `<o>_sd`) returns a
    **diagonal** covariance built from the marginal sds, so the call is always
-   honest. The diagonal of `cov` always equals `<o>_sd^2` from clause 2.
+   stated. The diagonal of `cov` always equals `<o>_sd^2` from clause 2.
 5. **Low-rank predictive covariance** [O] -- for a large output count, a joint
    `rff` surrogate fit with `cov_rank = q` stores the cross-output noise
    covariance in a rank-`q` factor-analysis form (`U U' + diag(d)`), and
@@ -79,7 +79,7 @@ on scale -- a conformer must not re-standardise.
 |---|---|---|
 | **quorum (reference)** | `rff` | Random Fourier features + Bayesian linear regression, predictive variance set by MacKay evidence maximisation (calibrated `<o>_sd`). Uses **ARD** lengthscales by default (per-input relevance learned from the evidence) and a **joint** multi-output fit (matrix-normal -- inverse-Wishart) preserving the cross-output covariance (clause 4); `ard = FALSE` / `joint = FALSE` recover the isotropic / per-output behaviour. `ard_refit = TRUE` profiles the prior/noise precisions `(a, t)` at each lengthscale (a fuller evidence, opt-in; `"cv"` regularises it on a k-fold held-out split); `cov_rank = q` stores a rank-`q` low-rank covariance (clause 5; `cov_method = "eigen"` / `"fa"` / `"auto"`) for large output counts. Self-contained -- the always-available default. |
 | **PESTO** | `gp` | `train_gp_surrogate()` / `predict_gp_surrogate()` already report a per-output predictive `$mean` **and** `$variance`, so the adapter maps them straight onto `<o>_mean` / `<o>_sd = sqrt(variance)`. Registered by `register_pesto_surrogates()`. (PESTO's `rff` surrogate returns only an aggregate `$uncertainty`, not per-output variance, so it is not registered.) |
-| **kernR** | `cme` | `fit_cme()` is a kernel linear smoother: it yields the conditional *mean* `y_hat(x*) = w(x*)' y` but **no** predictive variance. The adapter supplies the standard linear-smoother predictive variance `sigma^2 (1 + ||w(x*)||^2)` (with `sigma^2 = RSS / (n - tr(S))` from the in-sample smoother), so `<o>_sd` is honest. The conditional-mean map stays kernR's; only the UQ is added. Registered by `register_kernr_surrogates()`. (`dist_regression()` takes distributional *bag* inputs, not a parameter design, so it is not a C7 surrogate.) |
+| **kernR** | `cme` | `fit_cme()` is a kernel linear smoother: it yields the conditional *mean* `y_hat(x*) = w(x*)' y` but **no** predictive variance. The adapter supplies the standard linear-smoother predictive variance `sigma^2 (1 + ||w(x*)||^2)` (with `sigma^2 = RSS / (n - tr(S))` from the in-sample smoother), so `<o>_sd` is stated. The conditional-mean map stays kernR's; only the UQ is added. Registered by `register_kernr_surrogates()`. (`dist_regression()` takes distributional *bag* inputs, not a parameter design, so it is not a C7 surrogate.) |
 
 **Out-of-support abstention (clause 2a).** A conformer whose `<o>_sd` does not
 widen off-design must refuse there rather than report an in-design-sized

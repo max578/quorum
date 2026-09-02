@@ -4,7 +4,15 @@
 \alias{emit_koine}
 \title{Emit a koine fourth-opinion fit for triangulation}
 \usage{
-emit_koine(fb, data, n_samples = 4000L, seed = 1L, the_call = NULL, ...)
+emit_koine(
+  fb,
+  data,
+  n_samples = 4000L,
+  seed = 1L,
+  the_call = NULL,
+  standardise = TRUE,
+  ...
+)
 }
 \arguments{
 \item{fb}{An \code{fb_terms} object (the \verb{$fb} element of a core flexyBayes fit).}
@@ -17,6 +25,18 @@ emit_koine(fb, data, n_samples = 4000L, seed = 1L, the_call = NULL, ...)
 RNG state.}
 
 \item{the_call}{Optional originating call, carried into the fit's extras.}
+
+\item{standardise}{Logical. koine's random-effects lenses carry a fixed
+N(0, 5) prior on every coefficient and lognormal(0, 2) priors on the
+residual and group SDs, which the pass-level prior does not reach. On a
+response measured in the hundreds that prior dominates the opinion: the
+intercept is pulled toward zero and the group SD absorbs the offset. With
+\code{standardise = TRUE} (the default) the Gaussian response is centred and
+scaled and every non-intercept covariate is scaled to unit SD before
+koine fits, and the draws are mapped back to the original scale
+afterwards, so the same prior becomes a scale-aware weakly-informative
+one; the fit declares \code{prior = "koine_scaled"} in its extras. With
+\code{FALSE} koine fits the data as given and declares \code{"koine_default"}.}
 
 \item{...}{Reserved for future use.}
 }
@@ -51,7 +71,7 @@ nested entry, and whether they are crossed or nested is resolved by koine
 from the data. Outside that corner -- more than two groupings, a random
 slope, a correlated random structure, koine below 0.3.0 on a two-grouping
 model -- or whenever koine's own convergence gate fires, the returned object
-carries \code{status = "abstained"}, the honest fourth column. The synthesised
+carries \code{status = "abstained"}, the typed fourth column. The synthesised
 opinion is a stacking mixture over koine's battery, an independent witness on
 the orthogonal lens axis, never a pool across the engine-axis backends.
 

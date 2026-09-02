@@ -674,7 +674,7 @@ fit_surrogate <- function(
 
 # Promote a marginal <o>_mean / <o>_sd data.frame (a conformer or independent
 # fit) to an fb_surrogate_prediction with a diagonal per-row covariance -- the
-# honest fallback when only marginals are available (cov = TRUE on a
+# stated fallback when only marginals are available (cov = TRUE on a
 # marginals-only surrogate).
 .prediction_from_marginals <- function(df, output_names) {
   n <- nrow(df)
@@ -711,7 +711,7 @@ fit_surrogate <- function(
 #' cross-output covariance array (contract C7 clause 4). A joint `rff` surrogate
 #' supplies the full covariance; a marginals-only surrogate (independent `rff`,
 #' or a conformer reporting only `<o>_sd`) returns a diagonal covariance built
-#' from the marginal sds, so the call is always honest.
+#' from the marginal sds, so the call always states its basis.
 #'
 #' With `cov = "lowrank"` a joint `rff` surrogate returns the same joint
 #' predictive in a **compact factored** form for large output counts: an

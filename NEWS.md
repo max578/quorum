@@ -14,6 +14,41 @@
 * The `flexyBayesOrchestra_abstention` class stamp is now `quorum_abstention`;
   the `flexyBayesOrchestra.koine_activated` option is now
   `quorum.koine_activated`.
+* **The lens contract and registry** (`lens()`, `lens_from_draws()`,
+  `lens_from_fit()`, `lens_koine()`, `lens_status_quo()`, `lens_mechanism()`,
+  and the roster `register_lens()`/`get_lens()`/`list_lenses()`/
+  `clear_lenses()`) declare a member's estimate as a `quorum_lens`, with its
+  shared components, its expressible response shapes and its scope, so any
+  producer can register an adapter without a code change here.
+* **The TMB lens** (`lens_tmb()`) fits glmmTMB's Laplace-approximated
+  marginal likelihood and samples the very TMB objective that fit produced
+  with tmbstan's NUTS sampler, contributing a second Laplace implementation
+  and one objective sampled two ways, with the hub's default priors matched
+  as far as glmmTMB's syntax allows and declared when they are not.
+* **The independence ledger** (`quorum_independence()`) counts what every
+  pair of lenses shares across sampler, objective, priors and data
+  preparation and converts the count into the evidential weight a quorum
+  reads before treating agreement as corroboration.
+* **The agreement layer** (`agreement_thresholds()`, `agreement_pairwise()`,
+  `agreement_status()`, `agreement_matrix()`) re-derives the hub's
+  `triangulate()` comparison semantics over lens draws component by
+  component, proven bit-identical to the hub's own output on the same draws.
+* **Policy and resolution** (`quorum_policy()`, `policy_committed()`,
+  `lens_contribution()`, `quorum_resolve()`, `quorum_compare_policies()`)
+  generalise Study A0's hand-written two-lens cascade into a declared
+  fallback order over any number of lenses, with the two committed
+  conventions the cascade replaced kept as priceable policy objects.
+* **The front door** (`quorum()`) gates each lens on its own scope, asks it
+  to fit, compares what came back, weighs the comparison by declared
+  independence, and resolves it through the policy into a `quorum_verdict`:
+  `concordant`, `discordant`, `no_quorum` (abstain) or `not_computed`.
+* **The manifest** (`quorum_manifest()`) emits a verdict as an
+  `orchestra_manifest` with `inferential_target = "consensus"`, stamped
+  grounded only when a contributing lens is grounded and the lenses did not
+  read the same upstream data fact.
+* **The Study A0 cascade is reproduced bit-identically from the package** on
+  the shipped fixture: 200 decision cells resolve to the recorded tiers and
+  rates, mechanism carrying 150, statistical 48 and the status quo 2.
 
 ## Carried from flexyBayesOrchestra (development version)
 
@@ -136,7 +171,7 @@
   core's generic `triangulate()` consume the koine fit as its fourth column
   with **no flexyBayes core edit** (the lean-0.7.0 boundary holds). koine fields
   a population GLM + a single random intercept `(1 | g)` for gaussian /
-  binomial / poisson; it abstains honestly out of corner. The slot
+  binomial / poisson; it abstains outside its corner. The slot
   (`koine_status()`) is now live: activation floor `koine (>= 0.2.0)`, gated by
   `options(quorum.koine_activated = TRUE)` (the default). koine
   moved to `Suggests`; `posterior` added to `Suggests`.

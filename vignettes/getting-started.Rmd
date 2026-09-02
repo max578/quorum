@@ -7,47 +7,65 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+<!-- Render time: ~2 s under rmarkdown::render(); macOS arm64, R 4.5.1, one
+     core. -->
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 150
 )
 ```
 
-```{r}
+```{r library}
 library(quorum)
 ```
 
-## The composition question
+## Why
 
-`flexyBayes` alone fits a Bayesian mixed model given data you already have. It
-has no opinion on where that data came from, and no way to check its answer
-against a second, independently-derived one. `quorum` exists for
-the questions that only arise once `flexyBayes` sits inside a wider analytics
-constellation:
+quorum compares lenses, but a lens has to exist before it can be compared.
+The question this vignette answers is the one an analyst asks before any
+comparison is possible: *I have an APSIM ensemble, a cheap emulator I would
+rather use than the simulator itself, and a koine pass -- none of them
+came out of a flexyBayes fit, so how does each become something quorum can
+even read?* The three seams below are the three answers, one on-ramp each.
 
-- **Where does the data come from when it is the output of an expensive
-  simulator** -- an APSIM run, a PEST++ calibration -- rather than a table
-  someone already collected?
-- **Can inference proceed without paying the simulator's cost on every draw**,
-  while still being honest about the extra uncertainty that shortcut costs?
-- **Does a second, structurally different method agree with the Bayesian fit**,
-  or is the agreement only apparent because both methods share an assumption?
+## What
 
-This package answers those three questions with three seams, each a typed
-contract rather than a private convention, so any conforming producer or
-consumer can plug in without a code change here.
+A `quorum_lens()` compares two things that agree on their shape: two sets
+of parameter draws, or two response curves over the same grid. An APSIM
+ensemble, a surrogate's predictive distribution and a koine fit each start
+in a different shape of their own, so each needs its own on-ramp into the
+lens vocabulary. `fb_ensemble()` and `verify_fb_ensemble()` are the
+ensemble on-ramp (contract C5): they canonicalise and check a set of
+parameter draws paired with a simulator's response, whatever produced it.
+`fit_surrogate()` is the surrogate on-ramp (contract C7): it trains a fast,
+distribution-preserving stand-in for an expensive simulator, so a mechanism
+lens does not have to pay the simulator's cost on every draw. `emit_koine()`
+and `koine_status()` are the koine on-ramp (contract C3): koine's own battery
+battery, wrapped so its opinion reaches the same canonical parameter names a
+hub fit uses. None of the three verbs below builds or compares a lens
+directly -- that is *A quorum of lenses on Study A0* and *Adding a lens*'s
+job -- this vignette only gets each estimate through its own door.
 
-## Seam 1 -- ingest a simulation ensemble (contract C5)
+## Do
 
-A simulation ensemble is a set of parameter draws paired with the simulator's
-response to each draw: a design matrix and a row-aligned output matrix. The
-canonical container is `fb_ensemble()`; `as_fb_ensemble()` coerces a
-conforming producer (a PESTO calibration manifest, a raw `apsimx` run, a saved
-file) into that shape without either package depending on the other's
-internals.
+### Seam 1 -- ingest a simulation ensemble (contract C5)
+
+A simulation ensemble is a set of parameter draws paired with the
+simulator's response to each draw: a design matrix and a row-aligned output
+matrix. `fb_ensemble()` is the canonical container; `as_fb_ensemble()`
+(not called directly here) coerces a conforming producer -- a PESTO
+calibration manifest, a raw `apsimx` run, a saved file -- into that same
+shape, so a mechanism lens never has to know which producer it came from.
+The parameter-to-output map below is synthetic, standing in for whatever an
+APSIM run would have produced.
 
 ```{r ensemble}
+set.seed(20260902)
 g <- rbind(c(1.5, -0.8), c(0.4, 1.1)) # 2 outputs x 2 params, for illustration
 theta <- cbind(p1 = runif(80, -2, 2), p2 = runif(80, -2, 2))
 y <- theta %*% t(g) + matrix(rnorm(160, 0, 0.1), 80, 2L)
@@ -61,19 +79,20 @@ ens <- fb_ensemble(
 verify_fb_ensemble(ens)
 ```
 
-`verify_fb_ensemble()` is the conformance check: it fails loudly, naming the
-first violation, rather than letting a malformed ensemble reach a surrogate
-fit silently.
+`verify_fb_ensemble()` is the conformance check: it fails loudly, naming
+the first violation, rather than letting a malformed ensemble reach a
+surrogate fit silently.
 
-## Seam 2 -- emulate the simulator (contract C7)
+### Seam 2 -- emulate the simulator (contract C7)
 
 `fit_surrogate()` trains a fast stand-in for the simulator: a map from
 parameters to outputs that reports a predictive *distribution*, not a point,
-so a downstream calibration step can stay honest about emulator error instead
-of treating the surrogate as exact. The reference method, `"rff"`, is a
-random-features Bayesian linear model. Writing $\phi(x) \in \mathbb{R}^m$ for
-the random Fourier feature map of a parameter vector $x$ (Rahimi and Recht,
-2007), the predictive distribution at a new point $x_*$ is Gaussian with
+so a downstream calibration step can account for emulator error instead of
+treating the surrogate as exact. The reference method, `"rff"`,
+is a random-features Bayesian linear model. Writing $\phi(x) \in
+\mathbb{R}^m$ for the random Fourier feature map of a parameter vector $x$
+(Rahimi and Recht, 2007), the predictive distribution at a new point $x_*$
+is Gaussian with
 
 $$
 \mathbb{E}[y \mid x_*] = \phi(x_*)^{\top} \mu_N, \qquad
@@ -83,45 +102,125 @@ $$
 where $\mu_N$ and $S_N$ are the posterior mean and covariance of the linear
 weights and $t$ is the noise precision; both the prior precision $a$ and $t$
 are set by MacKay evidence maximisation rather than fixed by hand (Bishop,
-2006, secs. 3.3, 3.5). That evidence-optimised $t$ is what makes the reported
-standard deviation calibrated instead of an arbitrary ridge parameter.
+2006, secs. 3.3, 3.5). That evidence-optimised $t$ is what makes the
+reported standard deviation calibrated instead of an arbitrary ridge
+parameter.
 
 ```{r surrogate}
 sur <- fit_surrogate(ens)
-predict(sur, data.frame(p1 = 1, p2 = -1))
+pred_point <- predict(sur, data.frame(p1 = 1, p2 = -1))
+```
+
+```{r surrogate-kable, echo = FALSE}
+knitr::kable(
+  round(pred_point, 3),
+  caption = "Predictive mean and SD at (p1, p2) = (1, -1)."
+)
+```
+
+```{r fig-surrogate-vs-ensemble, eval = requireNamespace("ggplot2", quietly = TRUE), fig.cap = "The surrogate's predictive mean and +/- 2 SD band as p1 sweeps with p2 fixed at its ensemble mean (line and ribbon), against the ensemble's own training outputs for o1 (points). The surrogate never sees the points directly at predict time -- it interpolates the distribution it was fitted to."}
+p2_fixed <- mean(theta[, "p2"])
+sweep_grid <- data.frame(p1 = seq(-2, 2, length.out = 100L), p2 = p2_fixed)
+pred_sweep <- predict(sur, sweep_grid)
+band_df <- data.frame(
+  p1 = sweep_grid$p1,
+  mean = pred_sweep$o1_mean,
+  lo = pred_sweep$o1_mean - 2 * pred_sweep$o1_sd,
+  hi = pred_sweep$o1_mean + 2 * pred_sweep$o1_sd
+)
+ens_df <- data.frame(p1 = theta[, "p1"], o1 = y[, "o1"])
+
+ggplot2::ggplot(band_df, ggplot2::aes(x = p1)) +
+  ggplot2::geom_ribbon(
+    ggplot2::aes(ymin = lo, ymax = hi), fill = "#440154", alpha = 0.2
+  ) +
+  ggplot2::geom_line(ggplot2::aes(y = mean), colour = "#440154",
+                     linewidth = 1) +
+  ggplot2::geom_point(
+    data = ens_df, ggplot2::aes(x = p1, y = o1), colour = "#21908C",
+    alpha = 0.6, size = 1.6
+  ) +
+  ggplot2::labs(
+    x = "p1 (p2 fixed at its ensemble mean)", y = "o1",
+    title = "The surrogate against the ensemble it emulates"
+  ) +
+  ggplot2::theme_minimal()
+```
+
+```{r fig-surrogate-skip, echo = FALSE, eval = !requireNamespace("ggplot2", quietly = TRUE), results = "asis"}
+cat("ggplot2 is not installed; the surrogate-vs-ensemble figure is",
+    "skipped.\n")
 ```
 
 Richer emulators -- PESTO's Gaussian process, kernR's conditional mean
-embedding -- register through `register_surrogate()` and are consumed through
-exactly this same `predict()` contract; see the *Distribution-preserving
-surrogates* vignette for the full loop, including inversion against observed
-data and a posterior-predictive check of whether the surrogate distorted the
-output distribution.
+embedding -- register through `register_surrogate()` and are consumed
+through exactly this same `predict()` contract; see *Distribution-preserving
+surrogates* for the full loop, including inversion against observed data and
+a posterior-predictive check of whether the surrogate distorted the output
+distribution.
 
-## Seam 3 -- triangulate with koine (contract C3)
+### Seam 3 -- triangulate with koine (contract C3)
 
-koine is `flexyBayes`'s fourth opinion: an independently-derived REML or
-population-GLM fit that `triangulate()` compares against the Bayesian
-backends. Agreement across methods that do not share an inferential engine is
-stronger evidence than agreement within one engine's diagnostics.
-`emit_koine()` carries the model into koine's own corner: a population GLM with
-either a single random intercept or -- from koine 0.3.0 -- the
-multi-environment-trial structure of two crossed or nested random intercepts,
-`(1 | variety) + (1 | trial)`, which is the shape a variety trial actually has.
-Anything richer returns a typed abstention rather than a wrong fourth opinion.
-`koine_status()` reports whether the slot is currently active on the installed
-koine version, without requiring koine to be installed to load this package:
+koine is a stacked battery of marginal-likelihood and robust lenses, wrapped so its opinion reaches the hub's own
+canonical parameter names -- an independently-derived fourth opinion that
+`lens_koine()` (see *Adding a lens*) reaches directly, and that
+`flexyBayes::triangulate()` compares against the Bayesian backends inside the
+hub itself. `emit_koine()` carries the model into koine's own corner: a
+population GLM with either a single random intercept or -- from koine 0.3.0
+-- the multi-environment-trial structure of two crossed or nested random
+intercepts, `(1 | variety) + (1 | trial)`, which is the shape a variety
+trial actually has. Anything richer returns a typed abstention rather than a
+wrong fourth opinion. `koine_status()` reports whether the slot is
+currently active on the installed koine version, without requiring koine to
+be installed to load this package:
 
 ```{r koine-status}
-koine_status()
+status <- koine_status()
+status$activated
 ```
 
-## Where to go next
+## Read
 
-The *Distribution-preserving surrogates* vignette walks the full seam-2 loop
-end to end -- ingest, fit, read the distribution, invert, and check -- on a
-small worked example with figures. `?fit_surrogate`, `?fb_surrogate_ies`, and
+The predictive table above reports the surrogate's mean and SD at one point;
+both are finite and the SD is strictly positive, which is what a
+distribution-preserving prediction requires -- a surrogate that reported zero
+uncertainty anywhere inside its design would be silently claiming certainty
+the training ensemble does not support. The figure shows the same thing
+across a sweep: the band tracks the scatter of training points, widening
+only where the points themselves thin out. `status$activated` reports
+`r status$activated` on this build, meaning the koine fourth opinion is live
+and `emit_koine()` will attempt a real fit rather than decline outright; a
+build without a compatible koine install would report `FALSE`
+here, and every claim in this vignette about koine would still hold as a
+description of the seam, just not as something this render exercised.
+
+## Limits
+
+None of the three chunks above compares two lenses against each other --
+that comparison, and the independence and agreement machinery behind it, is
+what *Adding a lens* and *A quorum of lenses on Study A0* exercise. The
+ensemble here is synthetic, standing in for an APSIM run so this vignette
+needs no external binary and no network call; a real ensemble carries the
+same shape but a different, and generally larger, predictive uncertainty
+once the surrogate has to interpolate a genuinely nonlinear response rather
+than the near-linear toy used here.
+
+## What to read next
+
+*Distribution-preserving surrogates* walks the full seam-2 loop end to end --
+ingest, fit, read the distribution, invert, and check -- on a small worked
+example with figures. *A quorum of lenses on Study A0* and *Adding a lens*
+pick up where this vignette stops: turning an ingested estimate into a lens
+and comparing it against another. `?fit_surrogate`, `?fb_surrogate_ies`, and
 `?fb_surrogate_ppc` document each verb's arguments and return value.
+
+## Reproduce
+
+Seed `20260902` for the synthetic ensemble. Package versions follow.
+
+```{r session-info}
+sessionInfo()
+```
 
 ## References
 

@@ -2,9 +2,83 @@ url: https://max578.github.io/quorum/
 template:
   bootstrap: 5
 reference:
-  - title: Functions
+  - title: Consensus
+    desc: >
+      The front door, the declared policy, and the typed verdict a
+      comparison resolves into.
     contents:
-      - matches(".*")
+      - quorum
+      - quorum_policy
+      - quorum_policy_committed
+      - policy_committed
+      - lens_contribution
+      - contributions
+      - quorum_resolve
+      - quorum_compare_policies
+      - quorum_manifest
+      - quorum_verdict
+  - title: Lenses
+    desc: >
+      The lens contract, the built-in adapters, the registry, and the
+      independence ledger a comparison is weighed by.
+    contents:
+      - lens
+      - quorum_lens
+      - quorum_draws
+      - lens_from_draws
+      - lens_from_fit
+      - lens_koine
+      - lens_status_quo
+      - lens_mechanism
+      - lens_tmb
+      - register_lens
+      - get_lens
+      - list_lenses
+      - clear_lenses
+      - quorum_independence
+  - title: Agreement
+    desc: >
+      The hub's `triangulate()` comparison semantics, re-derived over lens
+      draws.
+    contents:
+      - agreement_thresholds
+      - agreement_pairwise
+      - agreement_status
+      - agreement_matrix
+  - title: On-ramps
+    desc: >
+      The seams by which a non-hub estimate becomes a lens: ensemble
+      ingestion (contract C5) and surrogate emulation (contract C7).
+    contents:
+      - fb_ensemble
+      - as_fb_ensemble
+      - read_fb_ensemble
+      - verify_fb_ensemble
+      - register_ensemble_source
+      - fb_prior_from_ensemble
+      - fit_surrogate
+      - fb_surrogate_ies
+      - fb_surrogate_ppc
+      - register_surrogate
+      - register_pesto_surrogates
+      - register_kernr_surrogates
+      - fb_cov_slice
+      - fb_pesto
+  - title: Fourth opinion
+    desc: >
+      The koine backend (contract C3): an independently-derived REML
+      opinion alongside the hub's own engines.
+    contents:
+      - emit_koine
+      - koine_genomic_lens
+      - koine_status
+  - title: Declines
+    desc: >
+      The package's one typed decline, issued wherever a lens, a
+      comparison or a resolution has nothing to carry.
+    contents:
+      - quorum_abstention
+      - is_quorum_abstention
 articles:
   - title: Articles
     navbar: ~

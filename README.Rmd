@@ -4,65 +4,77 @@ output: github_document
 
 <!-- README.md is generated from README.Rmd. Edit the .Rmd, not the .md. -->
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
 # quorum
 
-`quorum` is the orchestra-composition layer for
-[`flexyBayes`](https://github.com/max578/flexyBayes). The core `flexyBayes`
-package is a self-contained Bayesian mixed-model engine (ASReml / lme4 / brms
-grammar routed to greta, INLA, or brms, with cross-engine triangulation).
-`quorum` adds the pieces that only make sense inside the wider
-analytics constellation:
+`quorum` is the Crop Analytics Orchestra's consensus layer. It never fits a
+model of its own: every estimate reaches it as a *lens* -- a member's fitter
+behind an adapter that declares what it shares with the other lenses
+(sampler, objective, priors, data preparation), the response shapes it can
+express, and its scope. A quorum of lenses that are independent enough of one
+another, and that agree, is what carries an answer; short of a quorum,
+`quorum` abstains rather than guessing. The three on-ramps by which a
+non-hub estimate becomes a lens stay in the package: simulation-ensemble
+ingestion, a distribution-preserving surrogate for an expensive simulator,
+and the koine fourth-opinion backend.
 
-- **Surrogate emulators** — cheap stand-ins for expensive fits
-  (`fit_surrogate()`, random-feature / Bayesian-linear emulators).
-- **Ensemble sources** — ingest, verify, and represent external posterior
-  ensembles (`fb_ensemble()`, `as_fb_ensemble()`, `verify_fb_ensemble()`).
-- **Ensemble-derived priors** — turn an ensemble into a `flexyBayes` prior
-  (`fb_prior_from_ensemble()`, `fb_pesto()`).
-- **Surrogate posterior predictive checks** — MMD-based checks
-  (`fb_surrogate_ppc()`, `fb_surrogate_ies()`).
-- **koine fourth-opinion slot** — the synthesised orthogonal-lens opinion
-  `flexyBayes::triangulate()` consumes, active by default on a compatible
-  koine install (`koine_status()`).
-
-If you only need Bayesian mixed models, install `flexyBayes` alone. Install this
-package when you are composing `flexyBayes` with PESTO / kernR / the rest of the
-orchestra.
+> **Rule in one line.** A quorum of independent lenses must agree before an
+> answer is carried; no quorum means abstain.
 
 ## Installation
 
+`quorum` is not on CRAN. Install the local build from a clone of the package
+tree:
+
 ```{r eval=FALSE}
-# installs flexyBayes (the core) and the orchestra optionals as needed;
-# needs read access to the private max578/flexyBayes and max578/koine repos
-pak::pak("max578/quorum")
+# from the top of the cloned package tree
+devtools::install_local(".")
 ```
 
 ## Minimal example
 
-```{r eval=FALSE}
+Two lenses, built from draws already in hand, compared and resolved through a
+declared policy:
+
+```{r example}
 library(quorum)
 
-# a small parameter -> output ensemble, as if from a simulator
-theta <- cbind(p1 = runif(80, -2, 2), p2 = runif(80, -2, 2))
-y <- theta %*% rbind(c(1.5, -0.8), c(0.4, 1.1)) + rnorm(160, 0, 0.1)
-ens <- fb_ensemble(as.data.frame(theta), as.data.frame(y), provenance = list(source = "raw"))
+set.seed(1)
+draws_a <- quorum_draws(list(`(Intercept)` = rnorm(500, 10, 1)),
+                        source = "engine_a")
+draws_b <- quorum_draws(list(`(Intercept)` = rnorm(500, 10.05, 1.02)),
+                        source = "engine_b")
 
-# fit a distribution-preserving surrogate and read its predictive sd
-sur <- fit_surrogate(ens)
-predict(sur, data.frame(p1 = 1, p2 = -1))
+a <- lens_from_draws(draws_a, name = "a", member = "engine_a",
+                     shares = c(sampler = "nuts", objective = "stan_a",
+                               priors = "hub", data_prep = "hub"))
+b <- lens_from_draws(draws_b, name = "b", member = "engine_b",
+                     shares = c(sampler = "laplace", objective = "tmb",
+                               priors = "hub", data_prep = "hub"))
+
+verdict <- quorum(list(a, b),
+                  policy = quorum_policy(order = c("a", "b"), min_lenses = 2L))
+print(verdict)
 ```
 
-## Relationship to flexyBayes
+## What lives here
 
-```
-flexyBayes            (core: mixed models + triangulation; CRAN / rOpenSci)
-   ^
-   | Imports
-   |
-quorum   (this package: surrogates, ensembles, derived priors;
-                       r-universe / orchestra-internal)
-```
+| Group | Verbs |
+|---|---|
+| Consensus | `quorum()`, `quorum_policy()`, `policy_committed()`, `lens_contribution()`, `contributions()`, `quorum_resolve()`, `quorum_compare_policies()`, `quorum_manifest()` |
+| Lenses | `lens()`, `lens_from_draws()`, `lens_from_fit()`, `lens_koine()`, `lens_status_quo()`, `lens_mechanism()`, `lens_tmb()`, `register_lens()` / `get_lens()` / `list_lenses()` / `clear_lenses()`, `quorum_independence()` |
+| Metrics | `agreement_thresholds()`, `agreement_pairwise()`, `agreement_status()`, `agreement_matrix()` |
+| On-ramps (C5 / C7) | `fb_ensemble()`, `as_fb_ensemble()`, `verify_fb_ensemble()`, `fit_surrogate()`, `fb_surrogate_ies()`, `fb_surrogate_ppc()`, `register_surrogate()` |
+| koine backend | `emit_koine()`, `koine_status()`, `koine_genomic_lens()` |
 
-## License
+## Learn more
 
-GPL (>= 3) — matching the `flexyBayes` core it imports.
+`vignette("quorum-on-study-a0")` walks a quorum of lenses across Study A0's
+200 decision cells on the shipped fixture; `vignette("adding-a-lens")` builds
+a lens from the contract up, worked through a TMB adapter.

@@ -10,37 +10,59 @@ output:
     toc_depth: 2
 ---
 
+<!-- Render time: ~2 s under rmarkdown::render() when kernR is installed
+     (the PPC chunk adds a permutation test; without kernR that chunk is
+     skipped and the vignette is faster still). macOS arm64, R 4.5.1, one
+     core. -->
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   eval = TRUE,
-  fig.width = 6,
-  fig.height = 4
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 150
 )
 library(quorum)
 set.seed(1)
 ```
 
-A *surrogate* (or emulator) replaces an expensive simulator with a fast map
-from parameter sets to outputs. The quorum surrogate (contract C7)
-does one extra thing that an ordinary regression emulator does not: it reports a
-predictive **distribution**, not a point. Reporting the predictive standard
-deviation alongside the mean is what lets a downstream calibration or inverse
-step stay honest about emulator error instead of silently treating the
-surrogate as exact.
+## Why
 
-This vignette walks the whole loop on a small, self-contained example -- ingest
-an ensemble, fit a surrogate, read its predictive distribution, invert it against
-observed data, and check whether it distorted the output distribution. The
-reference surrogate ships with quorum itself and needs no other
-package, so every code chunk below runs as shown.
+*Does the fast stand-in I trained for my simulator actually preserve the
+simulator's predictive distribution, not just its mean, and would I be able
+to tell if it did not?* That is the question anyone plugging a surrogate
+into a mechanism lens has to answer before trusting it, and it is what this
+vignette exists to answer: a *surrogate* (or emulator) that reports a
+predictive **distribution**, not a point, walked through the whole loop --
+ingest, fit, read, invert, check -- so the distribution can be inspected and
+falsified rather than assumed. The reference surrogate ships with quorum
+itself and needs no other package, so every code chunk below runs as shown;
+one chunk needs kernR and is guarded accordingly.
 
-## A simulator we can check against
+## What
+
+`fb_ensemble()` carries a simulation ensemble (contract C5) -- a design
+matrix paired with the simulator's row-aligned response, from whatever
+producer built it. `fit_surrogate()` trains a fast, distribution-preserving
+stand-in for the simulator (contract C7): its `predict()` method returns a
+mean *and* a standard deviation for every output, so a downstream step never
+has to treat the surrogate as exact. `fb_surrogate_ies()` is the
+calibration consumer -- an Ensemble Smoother with Multiple Data Assimilation
+that inverts observed data against the surrogate in place of the simulator.
+`fb_surrogate_ppc()` is the predictive check -- a maximum-mean-discrepancy
+test, run through kernR, of whether the surrogate's own predictive draws are
+distinguishable from the true simulator's outputs. `fb_cov_slice()` reads
+one row's cross-output covariance out of a joint prediction.
+
+## Do
+
+### A simulator we can check against
 
 We use a linear forward model `y = G theta` so the truth is known and the
-inversion is exact in expectation. Three outputs, two parameters, and a little
-observation noise.
+inversion is exact in expectation. Three outputs, two parameters, and a
+little observation noise.
 
 ```{r ensemble}
 g <- rbind(c(1.5, -0.8), c(0.4, 1.1), c(-0.9, 0.6)) # 3 outputs x 2 params
@@ -54,8 +76,8 @@ colnames(y) <- c("o1", "o2", "o3")
 ```
 
 The ensemble is ingested through the C5 contract, so any conforming producer
-(a PESTO manifest, a raw `apsimx` run, a saved file) feeds a surrogate the same
-way. Here we build one directly from the design and the outputs.
+(a PESTO manifest, a raw `apsimx` run, a saved file) feeds a surrogate the
+same way. Here we build one directly from the design and the outputs.
 
 ```{r fb-ensemble}
 ens <- fb_ensemble(
@@ -66,12 +88,12 @@ ens <- fb_ensemble(
 ens
 ```
 
-## Fit a surrogate and read its distribution
+### Fit a surrogate and read its distribution
 
-`fit_surrogate()` trains the emulator. The default reference method, `"rff"`,
-is a random-Fourier-features Bayesian linear model whose predictive variance is
-set by evidence maximisation, so the reported standard deviation is calibrated
-rather than an arbitrary ridge.
+`fit_surrogate()` trains the emulator. The default reference method,
+`"rff"`, is a random-Fourier-features Bayesian linear model whose predictive
+variance is set by evidence maximisation, so the reported standard
+deviation is calibrated rather than an arbitrary ridge.
 
 ```{r fit}
 sur <- fit_surrogate(ens)
@@ -79,15 +101,22 @@ sur
 ```
 
 `predict()` returns, for each emulated output `<o>`, a `<o>_mean` and a
-`<o>_sd` column. The standard deviation is the distribution-preserving part of
-the contract.
+`<o>_sd` column. The standard deviation is the distribution-preserving part
+of the contract.
 
 ```{r predict}
 newdata <- data.frame(p1 = c(1.0, -2.0), p2 = c(0.5, 1.5))
-predict(sur, newdata)
+pred_new <- predict(sur, newdata)
 ```
 
-```{r fig-predictive-band, fig.cap = "Predictive mean (line) and \\pm 2 standard-deviation band (ribbon) for output o1 as p1 sweeps from -3 to 6 at p2 = 0, against the true linear response (dashed); the design only covers p1 in [-3, 3] (shaded), so the region to the right of it is genuinely out-of-design."}
+```{r predict-kable, echo = FALSE}
+knitr::kable(
+  round(pred_new, 3),
+  caption = "Predictive mean and SD at the two rows of newdata."
+)
+```
+
+```{r fig-predictive-band, fig.cap = "Predictive mean (line) and +/- 2 standard-deviation band (ribbon) for output o1 as p1 sweeps from -3 to 6 at p2 = 0, against the true linear response (dashed); the design only covers p1 in [-3, 3] (shaded), so the region to the right of it is genuinely out-of-design."}
 p1_sweep <- seq(-3, 6, length.out = 200L)
 sweep_df <- data.frame(p1 = p1_sweep, p2 = 0)
 pred_sweep <- predict(sur, sweep_df)
@@ -109,19 +138,50 @@ legend("topleft", c("predictive mean", "truth", "design range"),
 ```
 
 Inside the shaded design range the band hugs the truth and stays tight; once
-`p1` moves past 3 the mean starts to bend away from the true straight line and
-the band widens accordingly -- the reference surrogate is honestly less certain
-where it has never seen data, which is the behaviour clause 2 of the C7
-contract exists to require of every registered conformer.
+`p1` moves past 3 the mean starts to bend away from the true straight line
+and the band widens accordingly -- the reference surrogate is genuinely less
+certain where it has never seen data, which is the behaviour clause 2 of the
+C7 contract exists to require of every registered conformer.
 
-By default the reference surrogate fits the outputs **jointly**, so it preserves
-the cross-output predictive covariance, not only the per-output marginals.
-`predict(..., cov = TRUE)` returns that covariance as a per-row array, and
-`fb_cov_slice()` reads one row's `k`-by-`k` slice.
+```{r fig-surrogate-vs-ensemble, eval = requireNamespace("ggplot2", quietly = TRUE), fig.cap = "The surrogate's predicted mean against the ensemble's own training outputs for o1, one point per training draw, coloured by the surrogate's reported predictive SD at that point; the dashed line is exact recovery. A well-fitted surrogate on an easy, near-linear response like this one sits tight on the line with a narrow, roughly constant SD range."}
+pred_train <- predict(sur, as.data.frame(theta))
+fit_df <- data.frame(
+  observed = y[, "o1"], predicted = pred_train$o1_mean, sd = pred_train$o1_sd
+)
+ggplot2::ggplot(
+  fit_df, ggplot2::aes(x = observed, y = predicted, colour = sd)
+) +
+  ggplot2::geom_abline(slope = 1, intercept = 0, colour = "grey50",
+                       linetype = 2) +
+  ggplot2::geom_point(alpha = 0.7, size = 1.6) +
+  ggplot2::scale_colour_viridis_c(name = "predictive SD") +
+  ggplot2::labs(
+    x = "ensemble output o1 (training)", y = "surrogate predicted mean o1",
+    title = "The surrogate against the ensemble it emulates"
+  ) +
+  ggplot2::theme_minimal()
+```
+
+```{r fig-surrogate-vs-ensemble-skip, echo = FALSE, eval = !requireNamespace("ggplot2", quietly = TRUE), results = "asis"}
+cat("ggplot2 is not installed; the surrogate-vs-ensemble figure is",
+    "skipped.\n")
+```
+
+By default the reference surrogate fits the outputs **jointly**, so it
+preserves the cross-output predictive covariance, not only the per-output
+marginals. `predict(..., cov = TRUE)` returns that covariance as a per-row
+array, and `fb_cov_slice()` reads one row's `k`-by-`k` slice.
 
 ```{r joint-cov}
 pc <- predict(sur, newdata, cov = TRUE)
-round(fb_cov_slice(pc, 1L), 3)
+cov_slice_1 <- fb_cov_slice(pc, 1L)
+```
+
+```{r joint-cov-kable, echo = FALSE}
+knitr::kable(
+  round(cov_slice_1, 3),
+  caption = "Predictive cross-output covariance for row 1 of newdata."
+)
 ```
 
 ```{r fig-cov-heatmap, fig.cap = "Predictive cross-output covariance for row 1 of newdata (dense k x k slice, left) beside its rank-1 low-rank reconstruction (right); darker cells are larger covariance magnitude."}
@@ -141,19 +201,19 @@ The rank-1 reconstruction reproduces the diagonal of the dense covariance
 exactly (clause 5 of the C7 contract) and visibly recovers the same
 off-diagonal pattern from a single latent factor, at `O(k)` rather than
 `O(k^2)` storage -- the picture that makes the low-rank approximation's
-fidelity, not just its numeric closeness, inspectable.
+fidelity, not just its numeric closeness, inspectable. The diagonal of that
+slice equals the `<o>_sd` values squared, exactly -- the marginal contract
+is never broken by the joint fit.
 
-The diagonal of that slice equals the `<o>_sd` values squared, exactly -- the
-marginal contract is never broken by the joint fit.
+### Invert: recover parameters from data
 
-## Invert: recover parameters from data
-
-`fb_surrogate_ies()` is the calibration consumer. It runs an Ensemble Smoother
-with Multiple Data Assimilation (ES-MDA), driving a prior parameter ensemble
-toward agreement with observed data using only the surrogate in place of the
-simulator. Because the surrogate is distribution-preserving, its predictive
-variance is folded into the data covariance, so emulator uncertainty inflates
-the assimilation noise where the emulator is least sure.
+`fb_surrogate_ies()` is the calibration consumer. It runs an Ensemble
+Smoother with Multiple Data Assimilation (ES-MDA), driving a prior parameter
+ensemble toward agreement with observed data using only the surrogate in
+place of the simulator. Because the surrogate is distribution-preserving,
+its predictive variance is folded into the data covariance, so emulator
+uncertainty inflates the assimilation noise where the emulator is least
+sure.
 
 ```{r invert}
 theta_true <- c(p1 = 1.2, p2 = -0.7)
@@ -168,14 +228,21 @@ fit <- fb_surrogate_ies(sur, observed, obs_sd = 0.05, prior = prior, seed = 7)
 fit
 ```
 
-The posterior ensemble concentrates near the truth, and the data misfit falls
-from prior to posterior.
+The posterior ensemble concentrates near the truth, and the data misfit
+falls from prior to posterior.
 
 ```{r invert-recovery}
-rbind(
+recovery_tab <- rbind(
   truth = theta_true,
   prior_mean = colMeans(prior),
   posterior_mean = colMeans(fit$posterior)
+)
+```
+
+```{r invert-recovery-kable, echo = FALSE}
+knitr::kable(
+  round(recovery_tab, 3),
+  caption = "Truth, prior mean and posterior mean after ES-MDA."
 )
 ```
 
@@ -185,19 +252,20 @@ plot(seq_along(fit$misfit) - 1L, fit$misfit, type = "b", pch = 16,
      main = "Inversion trace")
 ```
 
-The misfit falls monotonically from the prior to the final iteration, which is
-the diagnostic that the assimilation is actually pulling the ensemble toward
-agreement with the observed data rather than merely inflating its spread.
+The misfit falls monotonically from the prior to the final iteration, which
+is the diagnostic that the assimilation is actually pulling the ensemble
+toward agreement with the observed data rather than merely inflating its
+spread.
 
-## Check: did the surrogate distort the distribution?
+### Check: did the surrogate distort the distribution?
 
-A surrogate can recover the mean while getting the *spread* or the *cross-output
-correlation* wrong. `fb_surrogate_ppc()` tests the predictive distribution
-itself, by drawing from the surrogate at held-out parameter sets and comparing
-the draw cloud to the true simulator outputs with kernR's maximum-mean-discrepancy
-posterior-predictive check. The MMD test lives in kernR -- quorum
-only generates the predictive sample -- so this chunk runs only when kernR is
-installed.
+A surrogate can recover the mean while getting the *spread* or the
+*cross-output correlation* wrong. `fb_surrogate_ppc()` tests the
+predictive distribution itself, by drawing from the surrogate at held-out
+parameter sets and comparing the draw cloud to the true simulator outputs
+with kernR's maximum-mean-discrepancy posterior-predictive check. The MMD
+test lives in kernR -- quorum only generates the predictive sample -- so
+this chunk runs only when kernR is installed.
 
 ```{r ppc, eval = requireNamespace("kernR", quietly = TRUE)}
 set.seed(4)
@@ -213,48 +281,92 @@ check <- fb_surrogate_ppc(
 c(p_value = check$p_value, reject = check$reject)
 ```
 
+```{r ppc-skip, eval = !requireNamespace("kernR", quietly = TRUE), echo = FALSE, results = "asis"}
+cat("kernR is not installed on this build, so the predictive check is",
+    "not run here.\n")
+```
+
 A high p-value (no rejection) means the surrogate's predictive draws are
-indistinguishable from the simulator's outputs -- the distribution was preserved,
-not merely the mean. The check is joint by default, so it exercises the
-cross-output correlation, not only each output's spread.
+indistinguishable from the simulator's outputs -- the distribution was
+preserved, not merely the mean. The check is joint by default, so it
+exercises the cross-output correlation, not only each output's spread.
 
-## Many outputs: a low-rank covariance
+### Many outputs: a low-rank covariance
 
-When a simulator has a large number of outputs whose covariance is driven by a
-few latent factors, the dense `k`-by-`k` covariance is wasteful. `cov_rank = q`
-stores the cross-output covariance in a rank-`q` factor-analysis form, reducing
-the storage from order `k` squared to order `k` times `q`, while reproducing the
-covariance diagonal -- and hence every `<o>_sd` -- exactly.
+When a simulator has a large number of outputs whose covariance is driven
+by a few latent factors, the dense `k`-by-`k` covariance is wasteful.
+`cov_rank = q` stores the cross-output covariance in a rank-`q`
+factor-analysis form, reducing the storage from order `k` squared to order
+`k` times `q`, while reproducing the covariance diagonal -- and hence every
+`<o>_sd` -- exactly.
 
 ```{r lowrank}
 sur_lr <- fit_surrogate(ens, cov_rank = 1L)
 sur_lr$fit$sigma_lr$rank
 ```
 
-Both consumers use the factored form natively, so the dense covariance is never
-formed: `fb_surrogate_ies()` folds it into the Kalman update through the Woodbury
-identity, and `fb_surrogate_ppc()` samples it factored (and, with
-`project = TRUE`, runs the discrepancy test in the `q`-dimensional factor space,
-which is cheaper and higher-powered on the correlated structure for a large
-output count). The factor itself is fitted by one of three methods: an
-eigen-truncation (the default), a factor-analysis EM (`cov_method = "fa"`,
-more faithful when the residual noise is uneven across outputs), or `"auto"`
-(picks between them by the heteroscedasticity of the eigen-residual diagonal).
+Both consumers use the factored form natively, so the dense covariance is
+never formed: `fb_surrogate_ies()` folds it into the Kalman update through
+the Woodbury identity, and `fb_surrogate_ppc()` samples it factored (and,
+with `project = TRUE`, runs the discrepancy test in the `q`-dimensional
+factor space, which is cheaper and higher-powered on the correlated
+structure for a large output count). The factor itself is fitted by one of
+three methods: an eigen-truncation (the default), a factor-analysis EM
+(`cov_method = "fa"`, more faithful when the residual noise is uneven
+across outputs), or `"auto"` (picks between them by the heteroscedasticity
+of the eigen-residual diagonal).
 
-## Where the seam goes
+## Read
 
-The reference `rff` surrogate keeps quorum standalone-functional. Richer
-emulators -- a Gaussian process, a conditional mean embedding -- register through
-`register_surrogate()` and are consumed through exactly the same `predict()`
-contract, so the inversion and the check above work unchanged with a sibling's
-surrogate in place of the reference. The contract is the interface, not any one
-implementation.
+The training-fit figure above recovers the ensemble's own outputs with
+correlation `r round(cor(fit_df$observed, fit_df$predicted), 3)` and every
+predictive SD in a narrow band, which is what a near-linear response fitted
+well should look like; a wide spread of SDs, or points that stray far from
+the dashed line at a narrow SD, would say the surrogate is confidently
+wrong rather than genuinely uncertain. The inversion recovers `p1` and `p2`
+to within `r round(max(abs(colMeans(fit$posterior) - theta_true)), 3)` of
+the truth, and the misfit trace falls from
+`r round(fit$misfit[1L], 3)` at the prior to
+`r round(fit$misfit[length(fit$misfit)], 3)` at the final iteration -- a
+`r round(100 * (1 - fit$misfit[length(fit$misfit)] / fit$misfit[1L]), 1)`%
+reduction. The rank-1 covariance reconstruction reproduces the dense
+diagonal to machine precision, which is the exactness clause 5 of the C7
+contract requires and not merely a visual approximation.
 
-A surrogate is only as trustworthy as its predictive distribution. The point of
-making the standard deviation a contract requirement, and of shipping the
-inversion and the predictive check alongside the emulator, is that the
-distribution can be inspected and falsified rather than assumed. The reference
-surrogate is deliberately simple, so for a stiff or sharply non-linear simulator
-a richer registered emulator will preserve the distribution where the reference
-cannot, and the same predictive check is what tells the two apart.
+## Limits
+
+This is a linear forward model, chosen so the inversion is exact in
+expectation and every number above has a known truth to check against; a
+stiff or sharply nonlinear simulator would show the reference surrogate's
+band widening faster and its inversion converging less cleanly. The
+predictive check needs kernR and is skipped without it, in which case the
+distortion question this vignette asks is left open rather than answered
+either way. The reference `rff` surrogate keeps quorum standalone-functional,
+but it is deliberately simple: richer emulators -- a Gaussian process,
+kernR's conditional mean embedding -- register through `register_surrogate()`
+and are consumed through exactly the same `predict()` contract, so the
+inversion and the check above work unchanged with a sibling's surrogate in
+place of the reference, and a richer registered emulator will preserve the
+distribution where this reference cannot on a harder problem. A surrogate is
+only as trustworthy as its predictive distribution, which is why the
+standard deviation is a contract requirement rather than an optional extra,
+and why the inversion and the predictive check ship alongside the emulator
+instead of being left to a downstream user to improvise.
+
+## What to read next
+
+*Getting started with quorum* is the shorter path through the same seam,
+alongside the ensemble on-ramp and the koine fourth opinion. *A quorum of
+lenses on Study A0* and *Adding a lens* pick up past this vignette's stopping
+point: turning an ingested, emulated estimate into a lens and comparing it
+against another.
+
+## Reproduce
+
+Seed `1` set in this vignette's setup chunk; `set.seed(4)` before the
+predictive check and `seed = 7` passed to `fb_surrogate_ies()` for the
+inversion. Package versions follow.
+
+```{r session-info}
+sessionInfo()
 ```

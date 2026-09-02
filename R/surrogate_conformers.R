@@ -12,7 +12,7 @@
 #   * kernR's conditional mean embedding -- fit_cme() / predict.cme_fit() give a
 #     conditional *mean* (a linear smoother y_hat(x*) = w(x*)' y), but no
 #     predictive variance. The conformer supplies the standard linear-smoother
-#     predictive variance sigma^2 (1 + ||w(x*)||^2) -- honest UQ on top of
+#     predictive variance sigma^2 (1 + ||w(x*)||^2) -- stated UQ on top of
 #     kernR's mean, not a reimplementation of the embedding -- and gates that
 #     variance on the smoother's weight mass, because the variance formula is
 #     only meaningful where the smoother actually carries weight (see the
@@ -136,7 +136,7 @@ register_pesto_surrogates <- function() {
     "smoother mean collapses toward zero and the linear-smoother variance ",
     "sigma^2 (1 + ||w||^2) collapses to its in-design floor -- a confident ",
     "wrong answer. Emulate this region with fit_surrogate(method = \"rff\"), ",
-    "which widens honestly off-design, keep the prediction inside the ",
+    "which widens off-design as declared, keep the prediction inside the ",
     "design, or lower `weight_mass_floor` deliberately."
   )
   cond <- structure(
@@ -275,7 +275,7 @@ predict.fb_surrogate_kernr_cme <- function(object, newdata,
 #' the offending rows, their mass, and the floor. Pass `weight_mass_frac` (or an
 #' absolute `weight_mass_floor`) through [fit_surrogate()] to retune it, or
 #' `weight_mass_floor` to `predict()` to override it for one call; set the floor
-#' to 0 to disable the gate. The reference `rff` surrogate widens honestly
+#' to 0 to disable the gate. The reference `rff` surrogate widens as declared
 #' off-design and is the named fallback for extrapolation.
 #'
 #' Called opportunistically from `.onLoad()` when kernR is installed.

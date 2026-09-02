@@ -37,7 +37,7 @@ mass, raising a classed \code{fb_surrogate_cme_abstention} condition that names
 the offending rows, their mass, and the floor. Pass \code{weight_mass_frac} (or an
 absolute \code{weight_mass_floor}) through \code{\link[=fit_surrogate]{fit_surrogate()}} to retune it, or
 \code{weight_mass_floor} to \code{predict()} to override it for one call; set the floor
-to 0 to disable the gate. The reference \code{rff} surrogate widens honestly
+to 0 to disable the gate. The reference \code{rff} surrogate widens as declared
 off-design and is the named fallback for extrapolation.
 
 Called opportunistically from \code{.onLoad()} when kernR is installed.

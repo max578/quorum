@@ -38,7 +38,7 @@ With \code{cov = TRUE} it returns the \strong{joint} predictive distribution: an
 cross-output covariance array (contract C7 clause 4). A joint \code{rff} surrogate
 supplies the full covariance; a marginals-only surrogate (independent \code{rff},
 or a conformer reporting only \verb{<o>_sd}) returns a diagonal covariance built
-from the marginal sds, so the call is always honest.
+from the marginal sds, so the call always states its basis.
 
 With \code{cov = "lowrank"} a joint \code{rff} surrogate returns the same joint
 predictive in a \strong{compact factored} form for large output counts: an

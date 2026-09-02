@@ -143,3 +143,169 @@ quorum_lens <- S7::new_class(
 #' @param ... Passed to the `quorum_lens` constructor.
 #' @export
 lens <- function(...) quorum_lens(...)
+
+# ---- the lens registry -------------------------------------------------------
+
+# The roster a quorum draws from. One package-level environment keyed by lens
+# name; `parent = emptyenv()` stops a lookup falling through to the search path,
+# so a lens registered as `c` or `data` can never resolve to a base R object by
+# accident. Registration replaces by name, which is what a member re-declaring
+# its own lens after an engine upgrade needs, and what keeps the roster free of
+# two lenses answering to one name.
+.lens_registry <- new.env(parent = emptyenv())
+
+#' Register, retrieve, list and clear lenses
+#'
+#' The lens registry is the roster a quorum draws from. A member declares its
+#' estimate once, as a [quorum_lens()], and registers it under a name; the
+#' comparison then reaches the lens by that name rather than by holding the
+#' object. Registration replaces by name, so re-registering after an engine
+#' upgrade updates the roster in place rather than leaving two lenses answering
+#' to one name.
+#'
+#' The registry holds declarations, not results. Registering a lens neither
+#' fits nor ingests anything, because a lens is a fitter behind an adapter and
+#' the fitting happens when the comparison calls its `fit()`. Clearing the
+#' registry therefore costs nothing but the declarations themselves.
+#'
+#' @param lens A [quorum_lens()] to register. Anything else is a programmer
+#'   error and raises a condition rather than returning an abstention: a
+#'   registry that accepted non-lenses would defer the failure to the
+#'   comparison, where the caller can no longer see which registration was
+#'   wrong.
+#' @param name Single non-empty string naming a registered lens.
+#' @return `register_lens()` returns `lens` invisibly. `get_lens()` returns the
+#'   registered [quorum_lens()], or `NULL` when nothing is registered under
+#'   `name`; a lookup miss is a fact about the roster, not a failure.
+#'   `list_lenses()` returns a `data.frame` with one row per registered lens
+#'   ordered by name, carrying `name`, `member`, `kind`, `expresses` (the
+#'   declared shapes collapsed with `"/"`, empty for a lens that expresses
+#'   none) and one column per independence component (`sampler`, `objective`,
+#'   `priors`, `data_prep`); it has zero rows when the registry is empty.
+#'   `clear_lenses()` returns `NULL` invisibly.
+#' @examples
+#' d <- quorum_draws(list(beta = rnorm(50L)), source = "demo")
+#' l <- lens_from_draws(
+#'   d, name = "demo", member = "quorum",
+#'   shares = c(sampler = "none", objective = "demo", priors = "none",
+#'              data_prep = "none")
+#' )
+#' register_lens(l)
+#' list_lenses()
+#' identical(get_lens("demo"), l)
+#' get_lens("never_registered")
+#' clear_lenses()
+#' @export
+register_lens <- function(lens) {
+  if (!S7::S7_inherits(lens, quorum_lens)) {
+    stop("`lens` must be a quorum_lens object; got ",
+         paste(class(lens), collapse = "/"), ".", call. = FALSE)
+  }
+  assign(S7::prop(lens, "name"), lens, envir = .lens_registry)
+  invisible(lens)
+}
+
+#' @rdname register_lens
+#' @export
+get_lens <- function(name) {
+  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
+    stop("`name` must be a single non-empty string.", call. = FALSE)
+  }
+  if (!exists(name, envir = .lens_registry, inherits = FALSE)) {
+    return(NULL)
+  }
+  get(name, envir = .lens_registry, inherits = FALSE)
+}
+
+#' @rdname register_lens
+#' @export
+list_lenses <- function() {
+  nms <- sort(ls(envir = .lens_registry))
+  lenses <- lapply(nms, function(nm) {
+    get(nm, envir = .lens_registry, inherits = FALSE)
+  })
+  pull <- function(field) {
+    vapply(lenses, function(l) S7::prop(l, field), character(1L),
+           USE.NAMES = FALSE)
+  }
+  component <- function(key) {
+    vapply(lenses, function(l) unname(S7::prop(l, "shares")[[key]]),
+           character(1L), USE.NAMES = FALSE)
+  }
+  data.frame(
+    name = nms,
+    member = pull("member"),
+    kind = pull("kind"),
+    expresses = vapply(lenses, function(l) {
+      paste(S7::prop(l, "expresses"), collapse = "/")
+    }, character(1L), USE.NAMES = FALSE),
+    sampler = component("sampler"),
+    objective = component("objective"),
+    priors = component("priors"),
+    data_prep = component("data_prep"),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' @rdname register_lens
+#' @export
+clear_lenses <- function() {
+  rm(list = ls(envir = .lens_registry), envir = .lens_registry)
+  invisible(NULL)
+}
+
+# ---- wrapping draws a member has already produced ----------------------------
+
+#' Wrap draws a member has already produced as a lens
+#'
+#' The shortest path from a posterior to a lens. When a member has already
+#' produced its draws -- a saved posterior, an ensemble read from disk, a
+#' constant a practitioner is defending -- there is nothing left to fit, so the
+#' lens's `fit()` ignores the specification and the data and hands back the
+#' draws it was built from. Every built-in lens whose estimate is settled at
+#' construction time is built this way.
+#'
+#' The `kind` is taken from the draws rather than declared again, because a
+#' lens that disagreed with its own draws about whether they are parameters or
+#' a response curve would be caught only at the comparison.
+#'
+#' @param draws A [quorum_draws()] object the lens returns unchanged.
+#' @param name Single non-empty string, unique within a quorum.
+#' @param member Single non-empty string naming the package the estimate comes
+#'   from.
+#' @param shares Named character vector over `sampler`, `objective`, `priors`
+#'   and `data_prep`, the four components the independence ledger counts.
+#' @param expresses Character subset of `linear`, `plateau`, `threshold` and
+#'   `nonmonotone`; `character(0)` for a lens that expresses no shape at all,
+#'   such as a constant.
+#' @param scope A function `(spec)` returning `TRUE` inside the lens's scope
+#'   and a [quorum_abstention()] outside it. The default accepts everything,
+#'   which is right for draws that are already in hand.
+#' @return A [quorum_lens()] whose `fit()` returns `draws`.
+#' @examples
+#' d <- quorum_draws(list(beta = rnorm(100L)), source = "saved")
+#' l <- lens_from_draws(
+#'   d, name = "saved", member = "quorum",
+#'   shares = c(sampler = "none", objective = "saved", priors = "none",
+#'              data_prep = "none")
+#' )
+#' identical(S7::prop(l, "fit")(NULL, NULL), d)
+#' @export
+lens_from_draws <- function(draws, name, member, shares,
+                            expresses = "linear",
+                            scope = function(spec) TRUE) {
+  if (!S7::S7_inherits(draws, quorum_draws)) {
+    stop("`draws` must be a quorum_draws object; got ",
+         paste(class(draws), collapse = "/"), ".", call. = FALSE)
+  }
+  force(draws)
+  quorum_lens(
+    name = name,
+    member = member,
+    fit = function(spec, data, ...) draws,
+    shares = shares,
+    expresses = expresses,
+    kind = S7::prop(draws, "kind"),
+    scope = scope
+  )
+}
