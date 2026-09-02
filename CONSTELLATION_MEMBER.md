@@ -1,10 +1,10 @@
-# Orchestra membership — flexyBayesOrchestra
+# Orchestra membership — quorum
 
-> **This project (flexyBayesOrchestra) is a MEMBER of the Orchestra** (one
+> **This project (quorum) is a MEMBER of the Orchestra** (one
 > coordination structure; reconciled 2026-06-03). The leader-node is
 > **ORCHESTRA_dev** (governance, roster, contracts, TACI, publication); the
 > technical inference hub is **flexyBayes** (the dependency-DAG sink). This file is
-> flexyBayesOrchestra's back-pointer to that charter and a map of my siblings.
+> quorum's back-pointer to that charter and a map of my siblings.
 
 - **My role:** the **composition / glue layer** (`Imports: flexyBayes`) — I own no
   inference math of my own; I turn member outputs into shared contract objects so
@@ -26,7 +26,7 @@
   absent); *honest abstention/gating* (`as_fb_ensemble` errors with an actionable
   message on an unknown class; the koine + genomic-lens slots are Suggests-/option-
   gated); *leader-directed adoption*.
-- **Governance:** flexyBayesOrchestra is a **Max-owned personal package**
+- **Governance:** quorum is a **Max-owned personal package**
   (`max578`, MIT-track); the AAGI-AUS canon does not apply (it Imports flexyBayes
   but is itself a personal composition layer).
 
@@ -51,7 +51,7 @@
 | decideR | decision layer (loss-optimal closer) | open |
 | grainPlan | grain decision-orchestration (on decideR) | open (MIT) |
 | optimix | optimisation meta-layer; emits `orchestra_manifest` | open (MIT) |
-| flexyBayesOrchestra | **composition layer (this package; surrogates, koine backend)** | open |
+| quorum | **composition layer (this package; surrogates, koine backend)** | open |
 
 Planned: genoR. **Canonical charter:** `ORCHESTRA_dev/ORCHESTRA.md` (mirrored in
 the MaxAIbase brain, open tier). **Contract + dependency DAG:**

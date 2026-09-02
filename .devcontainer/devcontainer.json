@@ -1,5 +1,5 @@
 {
-  "name": "flexyBayesOrchestra (R dev)",
+  "name": "quorum (R dev)",
   "build": { "dockerfile": "Dockerfile" },
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
@@ -22,6 +22,6 @@
   "postCreateCommand": "Rscript -e 'if (file.exists(\"renv.lock\")) renv::restore() else pak::local_install_dev_deps()'",
   "remoteUser": "rstudio",
   "containerEnv": {
-    "R_LIBS_USER": "/workspaces/flexyBayesOrchestra/renv/library/R-4.4/x86_64-pc-linux-gnu"
+    "R_LIBS_USER": "/workspaces/quorum/renv/library/R-4.4/x86_64-pc-linux-gnu"
   }
 }

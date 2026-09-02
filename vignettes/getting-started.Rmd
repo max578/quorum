@@ -1,8 +1,8 @@
 ---
-title: "Getting started with flexyBayesOrchestra"
+title: "Getting started with quorum"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting started with flexyBayesOrchestra}
+  %\VignetteIndexEntry{Getting started with quorum}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,14 +15,14 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
-library(flexyBayesOrchestra)
+library(quorum)
 ```
 
 ## The composition question
 
 `flexyBayes` alone fits a Bayesian mixed model given data you already have. It
 has no opinion on where that data came from, and no way to check its answer
-against a second, independently-derived one. `flexyBayesOrchestra` exists for
+against a second, independently-derived one. `quorum` exists for
 the questions that only arise once `flexyBayes` sits inside a wider analytics
 constellation:
 

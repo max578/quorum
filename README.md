@@ -1,13 +1,13 @@
 
 <!-- README.md is generated from README.Rmd. Edit the .Rmd, not the .md. -->
 
-# flexyBayesOrchestra
+# quorum
 
-`flexyBayesOrchestra` is the orchestra-composition layer for
+`quorum` is the orchestra-composition layer for
 [`flexyBayes`](https://github.com/max578/flexyBayes). The core
 `flexyBayes` package is a self-contained Bayesian mixed-model engine
 (ASReml / lme4 / brms grammar routed to greta, INLA, or brms, with
-cross-engine triangulation). `flexyBayesOrchestra` adds the pieces that
+cross-engine triangulation). `quorum` adds the pieces that
 only make sense inside the wider analytics constellation:
 
 - **Surrogate emulators** — cheap stand-ins for expensive fits
@@ -32,13 +32,13 @@ kernR / the rest of the orchestra.
 ``` r
 # installs flexyBayes (the core) and the orchestra optionals as needed;
 # needs read access to the private max578/flexyBayes and max578/koine repos
-pak::pak("max578/flexyBayesOrchestra")
+pak::pak("max578/quorum")
 ```
 
 ## Minimal example
 
 ``` r
-library(flexyBayesOrchestra)
+library(quorum)
 
 # a small parameter -> output ensemble, as if from a simulator
 theta <- cbind(p1 = runif(80, -2, 2), p2 = runif(80, -2, 2))
@@ -56,7 +56,7 @@ predict(sur, data.frame(p1 = 1, p2 = -1))
        ^
        | Imports
        |
-    flexyBayesOrchestra   (this package: surrogates, ensembles, derived priors;
+    quorum   (this package: surrogates, ensembles, derived priors;
                            r-universe / orchestra-internal)
 
 ## License

@@ -1,13 +1,13 @@
 {
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
-  "identifier": "flexyBayesOrchestra",
-  "name": "flexyBayesOrchestra: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors",
+  "identifier": "quorum",
+  "name": "quorum: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors",
   "version": "0.0.0.9000",
   "description": "Companion to the 'flexyBayes' Bayesian mixed-model engine that supplies the orchestra-composition layer: cheap surrogate emulators of expensive fits, ensemble-source ingestion and verification, ensemble-derived priors, posterior predictive checks for surrogates, and dormant cross-engine backend slots. Depends on 'flexyBayes' for the core model representation and emits results in the same shapes.",
   "license": "https://spdx.org/licenses/GPL-3.0-or-later",
-  "codeRepository": "https://github.com/max578/flexyBayesOrchestra",
-  "issueTracker": "https://github.com/max578/flexyBayesOrchestra/issues",
+  "codeRepository": "https://github.com/max578/quorum",
+  "issueTracker": "https://github.com/max578/quorum/issues",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R"

@@ -9,7 +9,7 @@
 # inverse/calibration step needs is not silently destroyed (the
 # "distribution-preserving surrogate" the constellation's methods thesis names).
 #
-# flexyBayesOrchestra owns the surrogate CONTRACT (inst/surrogate_contract.md) + a
+# quorum owns the surrogate CONTRACT (inst/surrogate_contract.md) + a
 # registry + a self-contained REFERENCE surrogate (random Fourier features +
 # Bayesian linear regression, evidence-optimised UQ). kernR's CME /
 # dist_regression and PESTO's GP / RFF surrogates are richer CONFORMING
@@ -407,14 +407,14 @@
 
 # ---- the surrogate registry (extensibility seam) ----------------------------
 # method -> fit function. kernR registers "cme", PESTO registers "gp" / "rff_gp"
-# from their own packages; flexyBayesOrchestra ships "rff" (the self-contained default).
+# from their own packages; quorum ships "rff" (the self-contained default).
 
 .surrogate_registry <- new.env(parent = emptyenv())
 
 #' Register a surrogate-fitting method
 #'
 #' Extends [fit_surrogate()] with a new conforming surrogate (contract C7,
-#' `inst/surrogate_contract.md`) without modifying flexyBayesOrchestra. The fit function
+#' `inst/surrogate_contract.md`) without modifying quorum. The fit function
 #' takes the standardised design `x` (parameter sets), the response matrix `y`
 #' (outputs), and `...`, and returns an object with a `predict()` method
 #' yielding a per-output predictive mean and sd. This is how kernR's CME /
@@ -699,7 +699,7 @@ fit_surrogate <- function(
   )
 }
 
-#' Predict from a flexyBayesOrchestra surrogate (mean + sd per output)
+#' Predict from a quorum surrogate (mean + sd per output)
 #'
 #' Returns the surrogate's predictive distribution at new parameter sets. By
 #' default a `data.frame` carrying, for each emulated output `<o>`, a `<o>_mean`

@@ -26,7 +26,7 @@ A \code{flexybayes_koine} object: a list with \code{status}
 \code{koine} result, the \code{fb} IR, and an \code{extras} record (stacking weights,
 stacked ELPD, independence and diagnostics on the contributed path; the
 refusal reason and detail on the abstained path). On the abstained path
-the object's class additionally carries \code{"flexyBayesOrchestra_abstention"}
+the object's class additionally carries \code{"quorum_abstention"}
 and \code{"orchestra_refusal"} prepended ahead of \code{"flexybayes_koine"}, so a
 producer-agnostic decline predicate (any class ending in \verb{_refusal} /
 \verb{_abstention}, or the \code{orchestra_refusal} marker) recognises the outer
@@ -56,7 +56,7 @@ opinion is a stacking mixture over koine's battery, an independent witness on
 the orthogonal lens axis, never a pool across the engine-axis backends.
 
 Activation is gated by \code{\link[=koine_status]{koine_status()}}: koine installed at or above
-\verb{0.2.0} and \code{options(flexyBayesOrchestra.koine_activated = TRUE)} (the
+\verb{0.2.0} and \code{options(quorum.koine_activated = TRUE)} (the
 default). The draws are canonicalised to flexyBayes's parameter tokens, so the
 fit is self-naming and needs no \code{name_map} at the triangulate seam: the group
 SDs koine reports as \code{tau} / \verb{tau_<grouping>} become \verb{sd_<grouping>}.

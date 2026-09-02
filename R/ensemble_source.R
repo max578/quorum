@@ -5,7 +5,7 @@
 # calibration manifest, a raw apsimx run extracted to data.frames, a saved file,
 # or a future registered producer -- into ONE canonical `fb_ensemble` object the
 # methods-intense consumers (fb_pesto(), the surrogate seam, fb_apsim()) build
-# on. flexyBayesOrchestra depends on the CONTRACT (inst/ensemble_source_contract.md),
+# on. quorum depends on the CONTRACT (inst/ensemble_source_contract.md),
 # never on apsimx / PESTO internals. APSIM is executed upstream by apsimx; no
 # code here runs APSIM.
 #
@@ -23,11 +23,11 @@
 
 #' Construct a canonical simulation-ensemble object
 #'
-#' Builds an `fb_ensemble` -- flexyBayesOrchestra's canonical container for a
+#' Builds an `fb_ensemble` -- quorum's canonical container for a
 #' parameter-to-output simulation ensemble (contract C5,
 #' `inst/ensemble_source_contract.md`). `params` and `outputs` are the `(X, Y)`
 #' an emulator or surrogate trains on; `output_dims` and `observed` add the
-#' calibration framing when present. flexyBayesOrchestra never executes the simulator
+#' calibration framing when present. quorum never executes the simulator
 #' (APSIM is run upstream by `apsimx`); this is the ingest floor the
 #' methods-intense consumers share.
 #'
@@ -158,9 +158,9 @@ verify_fb_ensemble <- function(e) {
 #' Register an ensemble-source coercer for a producer class
 #'
 #' Extends [as_fb_ensemble()] so a new producer of simulation ensembles becomes
-#' ingestible without modifying flexyBayesOrchestra. The coercer takes a producer object
+#' ingestible without modifying quorum. The coercer takes a producer object
 #' and returns an `fb_ensemble`. This is the constellation extensibility seam
-#' for contract C5: a member registers its coercer rather than flexyBayesOrchestra
+#' for contract C5: a member registers its coercer rather than quorum
 #' hard-coding the member.
 #'
 #' @param producer_class A single string -- the S3 class of the producer object.
@@ -293,7 +293,7 @@ as_fb_ensemble.default <- function(x, ...) {
 # PESTO's pesto_ensemble_manifest (S7) carries params + outputs (row-aligned) +
 # obs_target + apsim_version -- a superset of C5. Coerced WITHOUT importing
 # PESTO: the S7 properties are read via S7::prop(), guarded by S7 availability
-# and a class check, so flexyBayesOrchestra stays standalone-functional when PESTO is
+# and a class check, so quorum stays standalone-functional when PESTO is
 # absent (dormant-correct).
 
 .coerce_pesto_manifest <- function(x, ...) {

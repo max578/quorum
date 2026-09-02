@@ -1,4 +1,4 @@
 library(testthat)
-library(flexyBayesOrchestra)
+library(quorum)
 
-test_check("flexyBayesOrchestra")
+test_check("quorum")

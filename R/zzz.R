@@ -1,4 +1,4 @@
-# Package load hooks for flexyBayesOrchestra.
+# Package load hooks for quorum.
 #
 # Constellation C7 surrogate-conformer auto-registration. When the sibling
 # member packages are installed (PESTO's GP surrogate, kernR's CME surrogate),

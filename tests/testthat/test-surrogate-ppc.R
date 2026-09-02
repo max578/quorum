@@ -489,7 +489,7 @@ test_that(".whiten_clouds yields a unit pooled covariance, shape-preserving", {
   scl <- diag(c(5, 1, 0.2, 3))
   x <- matrix(stats::rnorm(200L * 4L), 200L, 4L) %*% scl
   y <- matrix(stats::rnorm(60L * 4L), 60L, 4L) %*% scl + 2
-  wc <- flexyBayesOrchestra:::.whiten_clouds(x, y)
+  wc <- quorum:::.whiten_clouds(x, y)
   pooled <- rbind(wc$x, wc$y)
   expect_equal(stats::cov(pooled), diag(4L), tolerance = 0.05) # whitened ~ I
   expect_identical(dim(wc$x), dim(x))
@@ -635,7 +635,7 @@ test_that(".mmd_agg() ranks the observed statistic and its permutation replicate
     },
     .package = "kernR"
   )
-  res <- flexyBayesOrchestra:::.mmd_agg(
+  res <- quorum:::.mmd_agg(
     x = matrix(0, 1L, 1L),
     y = matrix(0, 1L, 1L),
     n_permutations = 9L,

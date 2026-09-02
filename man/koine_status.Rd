@@ -10,7 +10,7 @@ koine_status()
 A list with components:
 \describe{
 \item{\code{activated}}{Logical: \code{TRUE} when koine is installed at or above the
-activation floor and \code{options(flexyBayesOrchestra.koine_activated)} is
+activation floor and \code{options(quorum.koine_activated)} is
 not set \code{FALSE} (the slot is live as of 2026-06-08).}
 \item{\code{koine_installed}}{Logical: result of
 \code{nzchar(system.file(package = "koine"))}.}
@@ -32,7 +32,7 @@ activate it. koine is the synthesised fourth opinion on flexyBayes's
 orthogonal lens axis (the constellation's C1 + C3 contracts). The slot has
 been \strong{active by default since 2026-06-08} on an installed koine at or
 above the version floor, gated only by
-\code{options(flexyBayesOrchestra.koine_activated)}; it falls back to dormant
+\code{options(quorum.koine_activated)}; it falls back to dormant
 (a structured \code{koine_dormant_refusal}) when koine is absent, below floor, or
 the option is set \code{FALSE}. This helper is the canonical discoverability
 surface -- call \code{koine_status()} to check whether the slot is currently
@@ -47,5 +47,5 @@ cat(ks$activation_procedure, sep = "\n")
 
 }
 \seealso{
-\code{\link[flexyBayes:gretaR_status]{flexyBayes::gretaR_status()}} for the engine-axis sibling slot.
+\code{\link[=gretaR_status]{gretaR_status()}} for the engine-axis sibling slot.
 }

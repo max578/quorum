@@ -1,32 +1,36 @@
-Package: flexyBayesOrchestra
-Title: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and
-    Derived Priors
-Version: 0.0.0.9000
+Package: quorum
+Title: The Orchestra's Consensus Layer: Lenses In, a Typed Verdict Out
+Version: 0.1.0
 Authors@R:
     person("Max", "Moldovan", email = "max.moldovan@gmail.com",
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-9680-8474"))
-Description: Companion to the 'flexyBayes' Bayesian mixed-model engine that
-    supplies the orchestra-composition layer: cheap surrogate emulators of
-    expensive fits, ensemble-source ingestion and verification,
-    ensemble-derived priors, posterior predictive checks for surrogates,
-    and the koine fourth-opinion lens-axis backend for triangulation. Depends
-    on 'flexyBayes' for the core model representation and emits results in the
-    same shapes.
+Description: The consensus layer of the Crop Analytics Orchestra. Registers
+    any member's estimate of a shared estimand as a lens with declared
+    independence, expressiveness and scope; compares a quorum of lenses with
+    the hub's agreement semantics; resolves the comparison through a declared
+    policy into a typed verdict and an orchestra manifest. A quorum of
+    independent lenses must agree before an answer is carried, and no quorum
+    means abstain. Carries the on-ramps by which non-hub estimates become
+    lenses: ensemble-source ingestion, surrogate emulators of expensive fits,
+    ensemble-derived priors, posterior predictive checks for surrogates, and
+    the koine fourth-opinion backend. Depends on 'flexyBayes' for the core
+    model representation and emits results in the same shapes.
 License: MIT + file LICENSE
-URL: https://github.com/max578/flexyBayesOrchestra,
-    https://max578.github.io/flexyBayesOrchestra/
-BugReports: https://github.com/max578/flexyBayesOrchestra/issues
+URL: https://github.com/max578/quorum,
+    https://max578.github.io/quorum/
+BugReports: https://github.com/max578/quorum/issues
 Depends:
     R (>= 4.1.0)
 Imports:
     flexyBayes,
+    orchestraManifest,
+    S7,
     stats,
     utils
 Suggests:
     kernR,
     PESTO,
-    S7,
     gretaR (>= 0.4.0),
     koine (>= 0.3.0),
     sommer,
@@ -37,6 +41,7 @@ Suggests:
     withr
 Remotes:
     max578/flexyBayes,
+    max578/orchestraManifest,
     max578/kernR,
     max578/PESTO,
     max578/koine,

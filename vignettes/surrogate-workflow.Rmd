@@ -18,12 +18,12 @@ knitr::opts_chunk$set(
   fig.width = 6,
   fig.height = 4
 )
-library(flexyBayesOrchestra)
+library(quorum)
 set.seed(1)
 ```
 
 A *surrogate* (or emulator) replaces an expensive simulator with a fast map
-from parameter sets to outputs. The flexyBayesOrchestra surrogate (contract C7)
+from parameter sets to outputs. The quorum surrogate (contract C7)
 does one extra thing that an ordinary regression emulator does not: it reports a
 predictive **distribution**, not a point. Reporting the predictive standard
 deviation alongside the mean is what lets a downstream calibration or inverse
@@ -33,7 +33,7 @@ surrogate as exact.
 This vignette walks the whole loop on a small, self-contained example -- ingest
 an ensemble, fit a surrogate, read its predictive distribution, invert it against
 observed data, and check whether it distorted the output distribution. The
-reference surrogate ships with flexyBayesOrchestra itself and needs no other
+reference surrogate ships with quorum itself and needs no other
 package, so every code chunk below runs as shown.
 
 ## A simulator we can check against
@@ -195,7 +195,7 @@ A surrogate can recover the mean while getting the *spread* or the *cross-output
 correlation* wrong. `fb_surrogate_ppc()` tests the predictive distribution
 itself, by drawing from the surrogate at held-out parameter sets and comparing
 the draw cloud to the true simulator outputs with kernR's maximum-mean-discrepancy
-posterior-predictive check. The MMD test lives in kernR -- flexyBayesOrchestra
+posterior-predictive check. The MMD test lives in kernR -- quorum
 only generates the predictive sample -- so this chunk runs only when kernR is
 installed.
 
@@ -243,7 +243,7 @@ more faithful when the residual noise is uneven across outputs), or `"auto"`
 
 ## Where the seam goes
 
-The reference `rff` surrogate keeps flexyBayesOrchestra standalone-functional. Richer
+The reference `rff` surrogate keeps quorum standalone-functional. Richer
 emulators -- a Gaussian process, a conditional mean embedding -- register through
 `register_surrogate()` and are consumed through exactly the same `predict()`
 contract, so the inversion and the check above work unchanged with a sibling's

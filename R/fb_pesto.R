@@ -146,7 +146,7 @@ fb_prior_from_ensemble <- function(
 #' ([fb_prior_from_ensemble()]), and the per-parameter moment summary. The
 #' resulting `$prior` is passed straight to `flexybayes(..., prior = )`.
 #'
-#' flexyBayesOrchestra never executes the simulator (APSIM is run upstream by `apsimx`);
+#' quorum never executes the simulator (APSIM is run upstream by `apsimx`);
 #' this verb consumes the calibration result through the contract.
 #'
 #' @param x A C5 ensemble source (PESTO manifest, `fb_ensemble`, list, or path).

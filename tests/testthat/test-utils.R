@@ -10,12 +10,12 @@ test_that("%||% is defined inside the package, not borrowed from base", {
   # not merely happen to resolve via base on the R actually running the
   # tests.
   expect_true(
-    exists("%||%", envir = asNamespace("flexyBayesOrchestra"), inherits = FALSE)
+    exists("%||%", envir = asNamespace("quorum"), inherits = FALSE)
   )
 })
 
 test_that("%||% returns the left side when non-NULL, else the right", {
-  op <- get("%||%", envir = asNamespace("flexyBayesOrchestra"), inherits = FALSE)
+  op <- get("%||%", envir = asNamespace("quorum"), inherits = FALSE)
   expect_identical(op(5, 2), 5)
   expect_identical(op(NULL, 2), 2)
   expect_identical(op(NULL, NULL), NULL)

@@ -40,7 +40,7 @@ test_that("koine_status() reports the activated shape when koine is installed", 
 
 test_that("setting the activation option FALSE holds the slot dormant", {
   skip_if_not_installed("koine")
-  withr::local_options(flexyBayesOrchestra.koine_activated = FALSE)
+  withr::local_options(quorum.koine_activated = FALSE)
   expect_identical(
     .koine_dormancy_reason(),
     "slot_provisioned_not_activated"
@@ -304,7 +304,7 @@ test_that("an abstained emit_koine() result is a dispatchable orchestra decline"
   # "list"` consumers are unaffected)
   expect_identical(
     class(fk),
-    c("flexyBayesOrchestra_abstention", "orchestra_refusal",
+    c("quorum_abstention", "orchestra_refusal",
       "flexybayes_koine", "list")
   )
   expect_true(inherits(fk, "flexybayes_koine"))

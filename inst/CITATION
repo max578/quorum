@@ -1,8 +1,8 @@
 bibentry(
   bibtype  = "Manual",
-  title    = "flexyBayesOrchestra: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors",
+  title    = "quorum: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors",
   author   = c(person("Max", "Moldovan", comment = c(ORCID = "0000-0001-9680-8474"))),
   year     = sub("-.*", "", meta$Date %||% format(Sys.Date(), "%Y")),
   note     = sprintf("R package version %s", meta$Version),
-  url      = "https://github.com/max578/flexyBayesOrchestra"
+  url      = "https://github.com/max578/quorum"
 )

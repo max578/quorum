@@ -2,7 +2,7 @@
 % Please edit documentation in R/surrogate.R
 \name{predict.fb_surrogate}
 \alias{predict.fb_surrogate}
-\title{Predict from a flexyBayesOrchestra surrogate (mean + sd per output)}
+\title{Predict from a quorum surrogate (mean + sd per output)}
 \usage{
 \method{predict}{fb_surrogate}(object, newdata, cov = FALSE, ...)
 }

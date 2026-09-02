@@ -24,7 +24,7 @@
 # `canonical_names` S3 methods on flexyBayes core's exported generics, so core's
 # generic `triangulate()` consumes a `flexybayes_koine` fit as its fourth column
 # with no core edit (the lean-0.7.0 boundary holds). The single source of truth
-# for activation state is the option `flexyBayesOrchestra.koine_activated`
+# for activation state is the option `quorum.koine_activated`
 # (default TRUE), queried here only.
 
 # Minimum koine version carrying the programmatic, re-entrant builder
@@ -66,7 +66,7 @@
   if (!.koine_version_ok()) {
     return("koine_below_floor")
   }
-  activated <- isTRUE(getOption("flexyBayesOrchestra.koine_activated", TRUE))
+  activated <- isTRUE(getOption("quorum.koine_activated", TRUE))
   if (!activated) {
     return("slot_provisioned_not_activated")
   }
@@ -98,7 +98,7 @@
       "koine_pass/koine_result contract + the poisson (1 | g) corner)."
     ),
     paste0(
-      "Keep options(flexyBayesOrchestra.koine_activated = TRUE) (the default); ",
+      "Keep options(quorum.koine_activated = TRUE) (the default); ",
       "set it FALSE to hold the slot dormant."
     ),
     paste0(
@@ -150,7 +150,7 @@
 #' orthogonal lens axis (the constellation's C1 + C3 contracts). The slot has
 #' been **active by default since 2026-06-08** on an installed koine at or
 #' above the version floor, gated only by
-#' `options(flexyBayesOrchestra.koine_activated)`; it falls back to dormant
+#' `options(quorum.koine_activated)`; it falls back to dormant
 #' (a structured `koine_dormant_refusal`) when koine is absent, below floor, or
 #' the option is set `FALSE`. This helper is the canonical discoverability
 #' surface -- call `koine_status()` to check whether the slot is currently
@@ -160,7 +160,7 @@
 #' @return A list with components:
 #'   \describe{
 #'     \item{`activated`}{Logical: `TRUE` when koine is installed at or above the
-#'       activation floor and `options(flexyBayesOrchestra.koine_activated)` is
+#'       activation floor and `options(quorum.koine_activated)` is
 #'       not set `FALSE` (the slot is live as of 2026-06-08).}
 #'     \item{`koine_installed`}{Logical: result of
 #'       `nzchar(system.file(package = "koine"))`.}

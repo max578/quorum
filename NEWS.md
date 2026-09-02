@@ -1,4 +1,21 @@
-# flexyBayesOrchestra (development version)
+# quorum 0.1.0
+
+* **Renamed from `flexyBayesOrchestra` and re-dedicated as the orchestra's
+  consensus layer** (plan `ORCHESTRA_dev/plan/quorum_v0.1.md`, approved
+  2026-09-02). quorum compares lenses and never fits a model of its own: every
+  lens is a member's fitter behind an adapter with declared independence,
+  expressiveness and scope. A quorum of independent lenses must agree before an
+  answer is carried; no quorum means abstain. The previous capabilities stay as
+  the on-ramps by which non-hub estimates become lenses (ensemble ingestion,
+  surrogates, the koine backend); their function names are unchanged.
+* New: `quorum_abstention()` / `is_quorum_abstention()`, the package's typed
+  decline (classed `quorum_abstention` / `orchestra_refusal`).
+* `Imports:` gains `orchestraManifest` and `S7`.
+* The `flexyBayesOrchestra_abstention` class stamp is now `quorum_abstention`;
+  the `flexyBayesOrchestra.koine_activated` option is now
+  `quorum.koine_activated`.
+
+## Carried from flexyBayesOrchestra (development version)
 
 * Relicensed from GPL (>= 3) to MIT (orchestra-wide licence unification, 2026-09-02). No code change.
 
@@ -10,7 +27,7 @@
   gate, `is_orchestra_decline()`) actually holds -- was always plain
   `c("flexybayes_koine", "list")`, invisible to any predicate keyed on a
   `_refusal` / `_abstention` class suffix or the `orchestra_refusal` marker.
-  The abstained exit now prepends `c("flexyBayesOrchestra_abstention",
+  The abstained exit now prepends `c("quorum_abstention",
   "orchestra_refusal")` to that class vector; a contributed fit is unchanged.
   Existing consumers are unaffected: `inherits(x, "flexybayes_koine")`,
   `is.list(x)`, and every `*.flexybayes_koine` S3 method still dispatch, since
@@ -65,7 +82,7 @@
   `register_ensemble_source()`, and `fb_pesto()` attributed contracts C5
   (`fb_ensemble`) and C7 (`fb_surrogate`) to `flexyBayes`; `flexyBayes` 0.9.2
   exports neither verb. Ownership is now attributed to
-  `flexyBayesOrchestra` throughout, which is where both contracts are
+  `quorum` throughout, which is where both contracts are
   actually implemented; a reader following the shipped contract no longer
   calls a function that does not exist.
 * **`getting-started` vignette replaced (FBO-08).** The shipped vignette was
@@ -97,7 +114,7 @@
   `tools::checkRd()` flagged it as non-ASCII content without a declared
   encoding).
 
-# flexyBayesOrchestra 0.0.0.9000
+# quorum 0.0.0.9000
 
 * **koine genomic fourth opinion (`koine_genomic_lens()`).** The koine
   fourth opinion, specialised for genomics: it runs the established REML
@@ -121,9 +138,9 @@
   a population GLM + a single random intercept `(1 | g)` for gaussian /
   binomial / poisson; it abstains honestly out of corner. The slot
   (`koine_status()`) is now live: activation floor `koine (>= 0.2.0)`, gated by
-  `options(flexyBayesOrchestra.koine_activated = TRUE)` (the default). koine
+  `options(quorum.koine_activated = TRUE)` (the default). koine
   moved to `Suggests`; `posterior` added to `Suggests`.
-* Initial development version. flexyBayesOrchestra is the orchestra-composition
+* Initial development version. quorum is the orchestra-composition
   companion to flexyBayes, created by the flexyBayes lean-core split: it carries
   the surrogate emulators (`fit_surrogate()`, `fb_surrogate_ies()`,
   `fb_surrogate_ppc()`), ensemble sources (`fb_ensemble()`, `as_fb_ensemble()`,

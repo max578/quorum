@@ -133,15 +133,15 @@ test_that("fit_surrogate() does not perturb the caller's RNG stream", {
 
 test_that("register_surrogate() routes a custom method through fit_surrogate()", {
   on.exit(
-    if (exists("toy", envir = flexyBayesOrchestra:::.surrogate_registry)) {
-      rm("toy", envir = flexyBayesOrchestra:::.surrogate_registry)
+    if (exists("toy", envir = quorum:::.surrogate_registry)) {
+      rm("toy", envir = quorum:::.surrogate_registry)
     },
     add = TRUE
   )
   register_surrogate("toy", function(x, y, ...) {
     list(called = TRUE, n_out = ncol(y), n_feat = ncol(x))
   })
-  expect_true("toy" %in% flexyBayesOrchestra:::.surrogate_methods())
+  expect_true("toy" %in% quorum:::.surrogate_methods())
   e <- .mk_surrogate_train()
   s <- fit_surrogate(e, method = "toy")
   expect_identical(s$method, "toy")

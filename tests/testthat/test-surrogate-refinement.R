@@ -184,8 +184,8 @@ test_that("a registered conformer flows through the IES end-to-end", {
   # agnostic, not tied to the built-in rff.
   registerS3method("predict", "mock_conformer", .predict_mock_conformer)
   on.exit(
-    if (exists("mockgp", envir = flexyBayesOrchestra:::.surrogate_registry)) {
-      rm("mockgp", envir = flexyBayesOrchestra:::.surrogate_registry)
+    if (exists("mockgp", envir = quorum:::.surrogate_registry)) {
+      rm("mockgp", envir = quorum:::.surrogate_registry)
     },
     add = TRUE
   )

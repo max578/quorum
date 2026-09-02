@@ -16,8 +16,8 @@ Invisibly \code{NULL}.
 }
 \description{
 Extends \code{\link[=as_fb_ensemble]{as_fb_ensemble()}} so a new producer of simulation ensembles becomes
-ingestible without modifying flexyBayesOrchestra. The coercer takes a producer object
+ingestible without modifying quorum. The coercer takes a producer object
 and returns an \code{fb_ensemble}. This is the constellation extensibility seam
-for contract C5: a member registers its coercer rather than flexyBayesOrchestra
+for contract C5: a member registers its coercer rather than quorum
 hard-coding the member.
 }

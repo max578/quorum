@@ -25,7 +25,7 @@
 test_that("register_pesto_surrogates() makes method = 'gp' available", {
   skip_if_not_installed("PESTO")
   expect_identical(register_pesto_surrogates(), "gp")
-  expect_true("gp" %in% flexyBayesOrchestra:::.surrogate_methods())
+  expect_true("gp" %in% quorum:::.surrogate_methods())
 })
 
 test_that("the PESTO GP conformer recovers a surface with per-output mean+sd", {
@@ -54,7 +54,7 @@ test_that("the PESTO GP conformer recovers a surface with per-output mean+sd", {
 test_that("register_kernr_surrogates() makes method = 'cme' available", {
   skip_if_not_installed("kernR")
   expect_identical(register_kernr_surrogates(), "cme")
-  expect_true("cme" %in% flexyBayesOrchestra:::.surrogate_methods())
+  expect_true("cme" %in% quorum:::.surrogate_methods())
 })
 
 test_that("the kernR CME conformer recovers a surface with honest sd", {

@@ -16,7 +16,7 @@ Invisibly \code{NULL}.
 }
 \description{
 Extends \code{\link[=fit_surrogate]{fit_surrogate()}} with a new conforming surrogate (contract C7,
-\code{inst/surrogate_contract.md}) without modifying flexyBayesOrchestra. The fit function
+\code{inst/surrogate_contract.md}) without modifying quorum. The fit function
 takes the standardised design \code{x} (parameter sets), the response matrix \code{y}
 (outputs), and \code{...}, and returns an object with a \code{predict()} method
 yielding a per-output predictive mean and sd. This is how kernR's CME /

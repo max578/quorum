@@ -33,11 +33,11 @@ outputs are unlabelled.}
 An object of class \code{c("fb_ensemble", "list")}.
 }
 \description{
-Builds an \code{fb_ensemble} -- flexyBayesOrchestra's canonical container for a
+Builds an \code{fb_ensemble} -- quorum's canonical container for a
 parameter-to-output simulation ensemble (contract C5,
 \code{inst/ensemble_source_contract.md}). \code{params} and \code{outputs} are the \verb{(X, Y)}
 an emulator or surrogate trains on; \code{output_dims} and \code{observed} add the
-calibration framing when present. flexyBayesOrchestra never executes the simulator
+calibration framing when present. quorum never executes the simulator
 (APSIM is run upstream by \code{apsimx}); this is the ingest floor the
 methods-intense consumers share.
 }

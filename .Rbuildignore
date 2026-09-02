@@ -30,8 +30,8 @@
 ^API_STABILITY\.md$
 ^\.claude$
 ^\.claude/.*$
-^flexyBayesOrchestra\.Rcheck$
-^flexyBayesOrchestra_.*\.tar\.gz$
+^quorum\.Rcheck$
+^quorum_.*\.tar\.gz$
 ^tools$
 ^ledger$
 ^ledger/.*$

@@ -118,8 +118,8 @@ test_that("as_fb_ensemble() dispatches on producer shape", {
 test_that("register_ensemble_source() extends the ingest generic", {
   r <- .mk_raw_ensemble()
   on.exit(
-    if (exists("greta_sim", envir = flexyBayesOrchestra:::.ensemble_source_registry)) {
-      rm("greta_sim", envir = flexyBayesOrchestra:::.ensemble_source_registry)
+    if (exists("greta_sim", envir = quorum:::.ensemble_source_registry)) {
+      rm("greta_sim", envir = quorum:::.ensemble_source_registry)
     },
     add = TRUE
   )

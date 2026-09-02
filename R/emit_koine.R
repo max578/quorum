@@ -44,7 +44,7 @@
 # `emit_koine()`'s abstained exit already carries a real, correctly-typed
 # nested `koine_abstention` at `$koine` -- koine's own honest decline -- but
 # the outer wrapper itself was always plain `c("flexybayes_koine", "list")`,
-# invisible to that predicate. Stamping `"flexyBayesOrchestra_abstention"`
+# invisible to that predicate. Stamping `"quorum_abstention"`
 # (this package's own member-specific suffix, matching every other member's
 # `<member>_abstention` naming convention) ahead of `"orchestra_refusal"`
 # (the explicit opt-in marker) makes the outer object dispatchable while
@@ -53,7 +53,7 @@
 # is preserved, just with two names prepended.
 .stamp_flexybayes_koine_abstention <- function(x) {
   cls <- class(x)
-  new_cls <- c("flexyBayesOrchestra_abstention", "orchestra_refusal")
+  new_cls <- c("quorum_abstention", "orchestra_refusal")
   class(x) <- c(new_cls[!new_cls %in% cls], cls)
   x
 }
@@ -101,7 +101,7 @@
 #' the orthogonal lens axis, never a pool across the engine-axis backends.
 #'
 #' Activation is gated by [koine_status()]: koine installed at or above
-#' `0.2.0` and `options(flexyBayesOrchestra.koine_activated = TRUE)` (the
+#' `0.2.0` and `options(quorum.koine_activated = TRUE)` (the
 #' default). The draws are canonicalised to flexyBayes's parameter tokens, so the
 #' fit is self-naming and needs no `name_map` at the triangulate seam: the group
 #' SDs koine reports as `tau` / `tau_<grouping>` become `sd_<grouping>`.
@@ -119,7 +119,7 @@
 #'   `koine` result, the `fb` IR, and an `extras` record (stacking weights,
 #'   stacked ELPD, independence and diagnostics on the contributed path; the
 #'   refusal reason and detail on the abstained path). On the abstained path
-#'   the object's class additionally carries `"flexyBayesOrchestra_abstention"`
+#'   the object's class additionally carries `"quorum_abstention"`
 #'   and `"orchestra_refusal"` prepended ahead of `"flexybayes_koine"`, so a
 #'   producer-agnostic decline predicate (any class ending in `_refusal` /
 #'   `_abstention`, or the `orchestra_refusal` marker) recognises the outer

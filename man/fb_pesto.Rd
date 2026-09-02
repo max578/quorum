@@ -31,7 +31,7 @@ calibration -> validation -> generalisation pipeline: the canonical
 resulting \verb{$prior} is passed straight to \code{flexybayes(..., prior = )}.
 }
 \details{
-flexyBayesOrchestra never executes the simulator (APSIM is run upstream by \code{apsimx});
+quorum never executes the simulator (APSIM is run upstream by \code{apsimx});
 this verb consumes the calibration result through the contract.
 }
 \examples{
