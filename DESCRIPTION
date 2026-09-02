@@ -36,6 +36,7 @@ Suggests:
     tmbstan,
     rstan,
     INLA,
+    sn,
     gretaR (>= 0.4.0),
     koine (>= 0.3.0),
     sommer,

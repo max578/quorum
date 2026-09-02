@@ -124,8 +124,15 @@ hub_fit <- flexyBayes::flexybayes(
   seed = 1L
 )
 hub_lens <- lens_from_fit(hub_fit, name = "inla")
-hub_draws <- hub_lens@fit(NULL, NULL)
-names(hub_draws@draws)
+if (is_quorum_abstention(hub_lens)) {
+  # a lens that cannot hand over its draws declines, typed, and the rest of
+  # the comparison is skipped rather than run against nothing
+  print(hub_lens)
+  engines_ok <- FALSE
+} else {
+  hub_draws <- hub_lens@fit(NULL, NULL)
+  names(hub_draws@draws)
+}
 ```
 
 ```{r hub-lens-skip, eval = !has_inla, echo = FALSE, results = "asis"}
