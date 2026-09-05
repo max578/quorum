@@ -17,6 +17,7 @@ reference:
       - quorum_compare_policies
       - quorum_manifest
       - quorum_verdict
+      - matches("^print\\.quorum.*quorum_verdict$")
   - title: Lenses
     desc: >
       The lens contract, the built-in adapters, the registry, and the
@@ -36,6 +37,7 @@ reference:
       - list_lenses
       - clear_lenses
       - quorum_independence
+      - print.quorum_independence
   - title: Agreement
     desc: >
       The hub's `triangulate()` comparison semantics, re-derived over lens
@@ -57,6 +59,7 @@ reference:
       - register_ensemble_source
       - fb_prior_from_ensemble
       - fit_surrogate
+      - predict.fb_surrogate
       - fb_surrogate_ies
       - fb_surrogate_ppc
       - register_surrogate
@@ -72,6 +75,10 @@ reference:
       - emit_koine
       - koine_genomic_lens
       - koine_status
+      - print.flexybayes_koine
+      - coef.flexybayes_koine
+      - canonical_names.flexybayes_koine
+      - fb_as_draws_simple.flexybayes_koine
   - title: Declines
     desc: >
       The package's one typed decline, issued wherever a lens, a
@@ -82,3 +89,8 @@ reference:
 articles:
   - title: Articles
     navbar: ~
+    contents:
+      - getting-started
+      - adding-a-lens
+      - surrogate-workflow
+      - quorum-on-study-a0
