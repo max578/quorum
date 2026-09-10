@@ -51,12 +51,13 @@ quorum_verdict <- S7::new_class(
     resolution = S7::class_data.frame,
     policy = S7::class_any,
     manifest = S7::class_any,
-    abstention = S7::class_any
+    abstention = S7::class_any,
+    carried_draws = S7::class_any
   ),
   constructor = function(lenses, contributions, status, resolution, policy,
                          agreement = NULL, independence = NULL,
                          findings = .empty_findings(), manifest = NULL,
-                         abstention = NULL) {
+                         abstention = NULL, carried_draws = NULL) {
     if (!is.character(lenses)) {
       stop("`lenses` must be a character vector of lens names.", call. = FALSE)
     }
@@ -68,10 +69,50 @@ quorum_verdict <- S7::new_class(
       lenses = lenses, contributions = contributions, agreement = agreement,
       independence = independence, findings = findings, status = status,
       resolution = resolution, policy = policy, manifest = manifest,
-      abstention = abstention
+      abstention = abstention, carried_draws = carried_draws
     )
   }
 )
+
+# The carried lens's draws, or NULL.
+#
+# A consensus that did not reach a quorum carries no number, so it carries no
+# draws either: a downstream decision layer must not be able to price a verdict
+# the quorum declined to issue. Only a `concordant` status over a single
+# resolved cell releases the carried lens's posterior, which is what makes the
+# quorum -> decideR seam work without inventing a payload.
+.carried_draws <- function(draws_list, resolution, status) {
+  if (!identical(status, "concordant")) return(NULL)
+  if (is.null(resolution) || nrow(resolution) != 1L) return(NULL)
+  nm <- resolution$carried_lens[1L]
+  if (length(nm) != 1L || is.na(nm) || !nzchar(nm)) return(NULL)
+  .draws_matrix(draws_list[[nm]])
+}
+
+# A lens's draws as a plain numeric matrix, one column per quantity.
+#
+# `quorum_draws` holds a *named list of numeric vectors* for the `parameters`
+# kind and a matrix for the grid-valued kinds. Coercing the S7 object directly
+# would not fail loudly, it would produce a one-column list-matrix, so the
+# property is read and each shape reduced explicitly.
+.draws_matrix <- function(d) {
+  if (is.null(d)) return(NULL)
+  raw <- if (S7::S7_inherits(d, quorum_draws)) S7::prop(d, "draws") else d
+  m <- if (is.matrix(raw)) {
+    raw
+  } else if (is.list(raw) && length(raw) > 0L &&
+             all(vapply(raw, is.numeric, logical(1L)))) {
+    do.call(cbind, raw)
+  } else if (is.numeric(raw)) {
+    as.matrix(raw)
+  } else {
+    NULL
+  }
+  if (is.null(m) || !is.numeric(m) || nrow(m) == 0L || ncol(m) == 0L) {
+    return(NULL)
+  }
+  m
+}
 
 .empty_findings <- function() {
   data.frame(lens_a = character(0L), lens_b = character(0L),
@@ -420,7 +461,8 @@ quorum <- function(lenses, spec = NULL, data = NULL, policy, grid = NULL,
     lenses = names(lens_list), contributions = contrib,
     agreement = agreement$result, independence = independence$result,
     findings = findings, status = status, resolution = resolution,
-    policy = policy, manifest = NULL, abstention = abstention
+    policy = policy, manifest = NULL, abstention = abstention,
+    carried_draws = .carried_draws(draws_list, resolution, status)
   )
   S7::prop(out, "manifest") <- quorum_manifest(out)
   out

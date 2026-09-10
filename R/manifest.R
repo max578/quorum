@@ -5,7 +5,10 @@
 # integrity hash, the same grounding vocabulary, the same typed verdict slot.
 # The contributions table is the payload, the headline and the numbers behind
 # it are the summary, and both sit inside the hash, so a tampered verdict is
-# caught exactly as a tampered posterior is.
+# caught exactly as a tampered posterior is. When the quorum is concordant
+# over a single cell the carried lens's draws ride in `outputs`, hashed with
+# the rest, so a decision layer downstream can price the consensus instead of
+# receiving a verdict it cannot read.
 #
 # The grounding token is deliberately not the maximum of the lenses' own
 # tokens. A consensus is grounded when a contributing lens is grounded AND the
@@ -90,8 +93,15 @@ quorum_manifest <- function(verdict) {
     }
   )
   params <- as.data.frame(contrib, stringsAsFactors = FALSE)
+  # The carried lens's posterior rides in `outputs`, which is where the
+  # contract puts a payload and where a consumer's draws reader looks first.
+  # It is NULL unless the quorum was concordant over a single cell, so a
+  # verdict that declined to issue a number cannot be priced downstream. It is
+  # hashed with everything else: a tampered posterior is caught exactly as a
+  # tampered contributions table is.
+  outputs_local <- verdict@carried_draws
   data_hash <- orchestraManifest::manifest_data_hash(
-    params, NULL, NULL, NULL, NA_integer_, summary_local
+    params, outputs_local, NULL, NULL, NA_integer_, summary_local
   )
   orchestraManifest::orchestra_manifest(
     emitter_package = "quorum",
@@ -101,6 +111,7 @@ quorum_manifest <- function(verdict) {
     method = "quorum:consensus",
     seed = NA_integer_,
     params = params,
+    outputs = outputs_local,
     summary = summary_local,
     metadata = list(
       derived = FALSE,

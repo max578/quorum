@@ -1,3 +1,25 @@
+# quorum (development version)
+
+## The quorum -> decideR seam
+
+* **A concordant verdict now carries the carried lens's posterior into its
+  manifest**, in `outputs`, hashed with the contributions table and the summary.
+  Before this the lenses' draws were discarded once agreement had been computed,
+  so a consensus manifest left the package with nothing a decision layer could
+  read: `decideR::decide_from_manifest()` found no draws and failed on the shape.
+  The seam between the orchestra's consensus layer and its decision layer was
+  open, on the exact target the consensus layer exists to produce.
+
+* **A verdict that issued no number carries no draws.** Only a `concordant`
+  status over a single resolved cell releases the posterior. A `no_quorum`,
+  `discordant` or `not_computed` verdict emits `outputs = NULL`, so nothing
+  downstream can price a number the quorum declined to issue.
+
+* The draws are read through the lens object's own property rather than coerced.
+  `quorum_draws` holds a named list of numeric vectors for the `parameters`
+  kind, and coercing the object directly would have produced a one-column
+  list-matrix without failing, which is the quiet kind of wrong.
+
 # quorum 0.1.0
 
 * **Renamed from `flexyBayesOrchestra` and re-dedicated as the orchestra's
