@@ -14,7 +14,8 @@ quorum_verdict(
   independence = NULL,
   findings = .empty_findings(),
   manifest = NULL,
-  abstention = NULL
+  abstention = NULL,
+  carried_draws = NULL
 )
 }
 \arguments{

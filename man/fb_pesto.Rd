@@ -16,7 +16,7 @@ fb_pesto(x, method = c("moments", "pesto", "kde"), parameters = NULL)
 }
 \value{
 An object of class \code{c("fb_pesto", "list")} with components
-\code{ensemble} (the \code{\link[=fb_ensemble]{fb_ensemble()}}), \code{prior} (the derived \code{\link[flexyBayes:fb_prior]{flexyBayes::fb_prior()}}),
+\code{ensemble} (the \code{\link[=fb_ensemble]{fb_ensemble()}}), \code{prior} (the derived \code{\link[flexyBayes:fb_prior]{fb_prior()}}),
 \code{moments} (a \code{data.frame} of \code{parameter}, \code{mean}, \code{sd}), \code{method}, and
 \code{provenance}.
 }

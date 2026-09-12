@@ -20,7 +20,7 @@ fb_prior_from_ensemble(
 ensemble's parameter columns. \code{NULL} (default) uses all of them.}
 }
 \value{
-An \code{fb_prior} object (see \code{\link[flexyBayes:fb_prior]{flexyBayes::fb_prior()}}), ready to pass to
+An \code{fb_prior} object (see \code{\link[flexyBayes:fb_prior]{fb_prior()}}), ready to pass to
 \code{flexybayes(..., prior = )}.
 }
 \description{
@@ -51,5 +51,5 @@ p <- fb_prior_from_ensemble(e)
 p
 }
 \seealso{
-\code{\link[=fb_pesto]{fb_pesto()}}, \code{\link[=as_fb_ensemble]{as_fb_ensemble()}}, \code{\link[flexyBayes:fb_prior]{flexyBayes::fb_prior()}}.
+\code{\link[=fb_pesto]{fb_pesto()}}, \code{\link[=as_fb_ensemble]{as_fb_ensemble()}}, \code{\link[flexyBayes:fb_prior]{fb_prior()}}.
 }
