@@ -23,7 +23,7 @@
 #' Koine genomic fourth opinion (REML lens via sommer)
 #'
 #' Fit the established REML genomic BLUP with \pkg{sommer} on the same data
-#' and return a genomic *lens* for [flexyBayes::triangulate_genomic()] --
+#' and return a genomic *lens* for `flexyBayes::triangulate_genomic()` (flexyBayes 0.13 and earlier) --
 #' the field-standard fourth opinion the Bayesian multi-backend answer is
 #' cross-checked against. The lens carries the REML heritability, variance
 #' components (with standard errors), and breeding values (named by
@@ -42,7 +42,7 @@
 #'   `h2` / `var_g` / `var_e` are `list(estimate, se)` (the heritability SE
 #'   is a delta-method approximation) and `gebv` is a named numeric vector
 #'   of REML breeding values. Pass it as either argument of
-#'   [flexyBayes::triangulate_genomic()].
+#'   `flexyBayes::triangulate_genomic()` (flexyBayes 0.13 and earlier).
 #'
 #' @examples
 #' \dontrun{

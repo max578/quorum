@@ -20,5 +20,5 @@ A named list of numeric vectors, one per canonical parameter.
 \description{
 S3 method on flexyBayes's exported \code{fb_as_draws_simple()} generic. Returns a
 named list of numeric draw vectors over the canonical parameters, the shape
-\code{\link[flexyBayes:triangulate]{flexyBayes::triangulate()}} aligns on.
+\code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier) aligns on.
 }

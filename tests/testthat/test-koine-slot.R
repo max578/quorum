@@ -128,6 +128,10 @@ test_that("flexyBayes::triangulate() aligns on a koine fit via the generics", {
   ka <- emit_koine(fb, d, n_samples = 800L, seed = 4L)
   kb <- emit_koine(fb, d, n_samples = 800L, seed = 5L)
   skip_if(ka$status != "contributed" || kb$status != "contributed")
+  skip_if_not(
+    "triangulate" %in% getNamespaceExports("flexyBayes"),
+    "flexyBayes 0.14.0 removed triangulate()"
+  )
   tri <- flexyBayes::triangulate(ka, kb, n_samples = 500L)
   expect_true(is.list(tri))
   expect_true(!is.null(tri$n_common) && tri$n_common >= 2L)

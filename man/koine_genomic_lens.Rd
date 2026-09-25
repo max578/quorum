@@ -23,11 +23,11 @@ A genomic lens: \code{list(h2, var_g, var_e, gebv, label)}, where
 \code{h2} / \code{var_g} / \code{var_e} are \code{list(estimate, se)} (the heritability SE
 is a delta-method approximation) and \code{gebv} is a named numeric vector
 of REML breeding values. Pass it as either argument of
-\code{\link[flexyBayes:triangulate_genomic]{flexyBayes::triangulate_genomic()}}.
+\code{flexyBayes::triangulate_genomic()} (flexyBayes 0.13 and earlier).
 }
 \description{
 Fit the established REML genomic BLUP with \pkg{sommer} on the same data
-and return a genomic \emph{lens} for \code{\link[flexyBayes:triangulate_genomic]{flexyBayes::triangulate_genomic()}} --
+and return a genomic \emph{lens} for \code{flexyBayes::triangulate_genomic()} (flexyBayes 0.13 and earlier) --
 the field-standard fourth opinion the Bayesian multi-backend answer is
 cross-checked against. The lens carries the REML heritability, variance
 components (with standard errors), and breeding values (named by

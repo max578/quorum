@@ -36,6 +36,9 @@
 #'   none was emitted, or `NULL`.
 #' @param abstention A [quorum_abstention()] when the verdict carries no
 #'   number, else `NULL`.
+#' @param carried_draws A numeric matrix of the carried lens's draws, one
+#'   column per quantity, when the status is `"concordant"` over a single
+#'   resolved cell; else `NULL`.
 #' @return A `quorum_verdict` S7 object.
 #' @seealso [quorum()], [quorum_manifest()].
 #' @export

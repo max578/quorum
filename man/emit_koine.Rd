@@ -57,7 +57,7 @@ every \verb{*.flexybayes_koine} method still dispatch unchanged.
 Activates the koine lens-axis backend from the companion. Given a flexyBayes
 \code{fb_terms} intermediate representation (the \verb{$fb} element of any core fit) and
 the model frame, \code{emit_koine()} synthesises koine's fourth opinion and returns
-a \code{flexybayes_koine} object that \code{\link[flexyBayes:triangulate]{flexyBayes::triangulate()}} consumes
+a \code{flexybayes_koine} object that \code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier) consumes
 alongside an engine-axis fit (greta / INLA / brms / gretaR).
 }
 \details{
@@ -82,6 +82,6 @@ fit is self-naming and needs no \code{name_map} at the triangulate seam: the gro
 SDs koine reports as \code{tau} / \verb{tau_<grouping>} become \verb{sd_<grouping>}.
 }
 \seealso{
-\code{\link[=koine_status]{koine_status()}} for the activation state; \code{\link[flexyBayes:triangulate]{flexyBayes::triangulate()}}
+\code{\link[=koine_status]{koine_status()}} for the activation state; \code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier)
 for the consumption seam.
 }

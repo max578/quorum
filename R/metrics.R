@@ -61,7 +61,7 @@
 
 #' The hub's agreement cut-offs
 #'
-#' The cut-offs [flexyBayes::triangulate()] applies when it calls a parameter
+#' The cut-offs `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier) applies when it calls a parameter
 #' concordant, carrying the hub's own defaults. A parameter is concordant when
 #' the absolute mean difference is at most `mean_shift_sd_max` reference SDs,
 #' the Wasserstein-1 distance is at most `w1_sd_max` reference SDs, and the
@@ -96,7 +96,7 @@
 #'   `.triangulate_one` at `R/triangulate.R:495` and `R/triangulate.R:497`.
 #' @return A named list with the four elements above.
 #' @seealso [agreement_pairwise()], [agreement_status()],
-#'   [flexyBayes::triangulate()].
+#'   `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier).
 #' @export
 #' @examples
 #' agreement_thresholds()

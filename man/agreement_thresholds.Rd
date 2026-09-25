@@ -35,7 +35,7 @@ from \code{.FB_TRIANGULATE_SD_RATIO_BAND} at \code{R/triangulate.R:759}.}
 A named list with the four elements above.
 }
 \description{
-The cut-offs \code{\link[flexyBayes:triangulate]{flexyBayes::triangulate()}} applies when it calls a parameter
+The cut-offs \code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier) applies when it calls a parameter
 concordant, carrying the hub's own defaults. A parameter is concordant when
 the absolute mean difference is at most \code{mean_shift_sd_max} reference SDs,
 the Wasserstein-1 distance is at most \code{w1_sd_max} reference SDs, and the
@@ -60,5 +60,5 @@ agreement_thresholds(w1_sd_max = 0.05)
 }
 \seealso{
 \code{\link[=agreement_pairwise]{agreement_pairwise()}}, \code{\link[=agreement_status]{agreement_status()}},
-\code{\link[flexyBayes:triangulate]{flexyBayes::triangulate()}}.
+\code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier).
 }

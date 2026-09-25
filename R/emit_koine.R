@@ -83,7 +83,7 @@
 #' Activates the koine lens-axis backend from the companion. Given a flexyBayes
 #' `fb_terms` intermediate representation (the `$fb` element of any core fit) and
 #' the model frame, `emit_koine()` synthesises koine's fourth opinion and returns
-#' a `flexybayes_koine` object that [flexyBayes::triangulate()] consumes
+#' a `flexybayes_koine` object that `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier) consumes
 #' alongside an engine-axis fit (greta / INLA / brms / gretaR).
 #'
 #' koine's corner is a population GLM for the gaussian, binomial, and poisson
@@ -137,7 +137,7 @@
 #'   object without inspecting `$koine`; `inherits(x, "flexybayes_koine")` and
 #'   every `*.flexybayes_koine` method still dispatch unchanged.
 #'
-#' @seealso [koine_status()] for the activation state; [flexyBayes::triangulate()]
+#' @seealso [koine_status()] for the activation state; `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier)
 #'   for the consumption seam.
 #' @export
 emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
@@ -349,7 +349,7 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
 #'
 #' S3 method on flexyBayes's exported `fb_as_draws_simple()` generic. Returns a
 #' named list of numeric draw vectors over the canonical parameters, the shape
-#' [flexyBayes::triangulate()] aligns on.
+#' `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier) aligns on.
 #'
 #' @param fit A `flexybayes_koine` object.
 #' @param n_samples Unused (koine draws are pre-synthesised); kept for generic

@@ -42,6 +42,10 @@ none was emitted, or \code{NULL}.}
 
 \item{abstention}{A \code{\link[=quorum_abstention]{quorum_abstention()}} when the verdict carries no
 number, else \code{NULL}.}
+
+\item{carried_draws}{A numeric matrix of the carried lens's draws, one
+column per quantity, when the status is \code{"concordant"} over a single
+resolved cell; else \code{NULL}.}
 }
 \value{
 A \code{quorum_verdict} S7 object.

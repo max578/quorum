@@ -398,6 +398,10 @@ test_that("agreement_matrix() accepts quorum_draws lenses", {
 test_that("oracle S3a: quorum equals the hub on identical fixture draws", {
   skip_if_not_installed("flexyBayes")
 
+  skip_if_not(
+    "triangulate" %in% getNamespaceExports("flexyBayes"),
+    "flexyBayes 0.14.0 removed triangulate()"
+  )
   fx <- agreement_fixture()
   fit_a <- structure(list(draws = fx$a), class = "quorum_oracle_fit")
   fit_b <- structure(list(draws = fx$b), class = "quorum_oracle_fit")

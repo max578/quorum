@@ -86,6 +86,10 @@ test_that("the koine REML lens triangulates against a Bayesian lens", {
     gebv = koine$gebv + stats::rnorm(length(koine$gebv), 0, 0.1),
     label = "bayes"
   )
+  skip_if_not(
+    "triangulate_genomic" %in% getNamespaceExports("flexyBayes"),
+    "flexyBayes 0.14.0 removed triangulate_genomic()"
+  )
   tg <- flexyBayes::triangulate_genomic(bayes, koine)
   h2_row <- tg$components[tg$components$quantity == "heritability", ]
   expect_true(h2_row$intervals_overlap)
