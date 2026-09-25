@@ -75,3 +75,19 @@ print(verdict)
 A0’s 200 decision cells on the shipped fixture;
 `vignette("adding-a-lens")` builds a lens from the contract up, worked
 through a TMB adapter.
+
+## Contributing
+
+Bug reports and suggestions are welcome through the
+[issue tracker](https://github.com/max578/quorum/issues). See
+`CONTRIBUTING.md` for how to propose a change.
+
+## Citation
+
+``` r
+citation("quorum")
+```
+
+## Licence
+
+MIT + file LICENSE. See [LICENSE](LICENSE).

@@ -42,3 +42,5 @@
 ^CONSTELLATION_MEMBER\.md$
 ^LICENSE\.md$
 ^README\.html$
+^\.positai$
+^\.cursor$

@@ -8,3 +8,6 @@ docs
 Meta
 doc
 README.html
+.claude/
+.positai/
+.cursor/
