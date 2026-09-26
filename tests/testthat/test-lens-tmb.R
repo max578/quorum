@@ -80,6 +80,7 @@ tmb_hub_draws <- function(data, n_samples = 2000L) {
       out[[as.character(canonical$map[[native]])]] <- raw[[native]]
     }
   }
+  attr(out, "summary") <- flexyBayes::tidy(fit)
   out
 }
 
@@ -181,11 +182,14 @@ test_that("the lens agrees with the hub's INLA fit on the same model", {
   expect_true(all(names(lens_draws@draws) %in% names(hub)))
   expect_identical(names(lens_draws@draws), c("(Intercept)", "sd_g"))
 
-  hub_intercept <- hub[["(Intercept)"]]
+  # Compared with the hub's fit summary, not its draws: INLA's posterior
+  # sampling ignores R's seed, so a mean of draws differs from run to run.
+  hub_fixed <- attr(hub, "summary")
+  hub_fixed <- hub_fixed[hub_fixed$term == "(Intercept)", ]
   lens_intercept <- lens_draws@draws[["(Intercept)"]]
   expect_lt(
-    abs(mean(lens_intercept) - mean(hub_intercept)),
-    0.1 * stats::sd(hub_intercept)
+    abs(mean(lens_intercept) - hub_fixed$estimate),
+    0.1 * hub_fixed$std.error
   )
 
   hub_sd <- stats::median(hub[["sd_g"]])
