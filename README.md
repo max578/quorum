@@ -20,12 +20,10 @@ backend.
 
 ## Installation
 
-`quorum` is not on CRAN. Install the local build from a clone of the
-package tree:
+`quorum` is not on CRAN. Install the development version from GitHub:
 
 ``` r
-# from the top of the cloned package tree
-devtools::install_local(".")
+remotes::install_github("max578/quorum")
 ```
 
 ## Minimal example
