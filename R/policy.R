@@ -485,7 +485,8 @@ quorum_resolve <- function(contrib, policy) {
     !is.na(rows_local$reason) & rows_local$reason == "insufficient_evidence"
   verdict_vec[insufficient_vec] <- "default"
   ungrounded_vec <- (!is.na(rows_local$grounding) &
-    rows_local$grounding == orchestraManifest::GROUNDING_UNVERIFIED) |
+    rows_local$grounding %in%
+      c(orchestraManifest::GROUNDING_UNVERIFIED, "[unverified]")) |
     .flag(rows_local$producer_abstained)
   verdict_vec[ungrounded_vec] <- "abstain"
 

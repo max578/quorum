@@ -223,6 +223,23 @@ test_that("the committed convention decides, demotes and abstains", {
   expect_identical(quorum_resolve(tab_local, pol_sq)$action, c(120, 60, 60))
 })
 
+test_that("both the current and the older ungrounded token abstain", {
+  row_of <- function(token, cell) {
+    cbind(lens_contribution("mechanism", FALSE, FALSE, action = 120,
+                            grounding = token),
+          data.frame(lenses_disagree = FALSE, producer_abstained = FALSE,
+                     cell = cell, stringsAsFactors = FALSE))
+  }
+  tab_local <- contributions(list(
+    row_of(orchestraManifest::GROUNDING_UNVERIFIED, "current"),
+    row_of("[unverified]", "older")
+  ))
+  pol <- policy_committed("zero", lens = "mechanism", status_quo = 60,
+                          safe_action = 0)
+  expect_identical(quorum_resolve(tab_local, pol)$verdict,
+                   c("abstain", "abstain"))
+})
+
 test_that("a declared disagreement demotes a decisive cell", {
   tab_local <- contributions(
     cbind(lens_contribution("mechanism", TRUE, FALSE, action = 120),

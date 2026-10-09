@@ -173,6 +173,8 @@
 * Non-ASCII arrow in `as_fb_ensemble()` roxygen replaced with `->` (FBO-19;
   `tools::checkRd()` flagged it as non-ASCII content without a declared
   encoding).
+* `quorum_resolve()` treats both `"ungrounded"` (orchestraManifest 0.2.0)
+  and the older `"[unverified]"` as an ungrounded input.
 
 # quorum 0.0.0.9000
 
