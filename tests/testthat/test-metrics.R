@@ -460,12 +460,6 @@ test_that("oracle S3b: quorum equals the hub on two gated brms fits", {
   skip_on_cran()
   skip_if_not_installed("flexyBayes")
   skip_if_not_installed("brms")
-  # flexyBayes does not export triangulate(), so the two brms fits below
-  # have no hub output to diff against.
-  skip_if_not(
-    "triangulate" %in% getNamespaceExports("flexyBayes"),
-    "flexyBayes does not export triangulate()"
-  )
   withr::local_options(list(flexyBayes.silence_default_prior_note = TRUE))
 
   set.seed(4L)
@@ -517,6 +511,12 @@ test_that("oracle S3b: quorum equals the hub on two gated brms fits", {
     flexyBayes::canonical_names(fit_two, drop = TRUE)
   )
 
+  # flexyBayes does not export triangulate(), so there is no hub output to
+  # diff the two fits against.
+  skip_if_not(
+    "triangulate" %in% getNamespaceExports("flexyBayes"),
+    "flexyBayes does not export triangulate()"
+  )
   hub <- flexyBayes::triangulate(fit_one, fit_two)
   expect_true(isTRUE(hub$comparability$verified))
   expect_identical(hub$common, intersect(names(draws_one), names(draws_two)))
