@@ -61,8 +61,10 @@
 
 #' The hub's agreement cut-offs
 #'
-#' The cut-offs `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier) applies when it calls a parameter
-#' concordant, carrying the hub's own defaults. A parameter is concordant when
+#' The cut-offs the hub's cross-engine comparison applied when it called a
+#' parameter concordant, with the hub's own defaults. That comparison,
+#' `triangulate()`, was removed from flexyBayes in version 0.14.0; the
+#' source lines cited below are from flexyBayes 0.10.0. A parameter is concordant when
 #' the absolute mean difference is at most `mean_shift_sd_max` reference SDs,
 #' the Wasserstein-1 distance is at most `w1_sd_max` reference SDs, and the
 #' ratio of the two posterior SDs lies inside `sd_ratio_band`; any breach makes
@@ -95,8 +97,7 @@
 #'   `c(0.025, 0.975)`, from the `stats::quantile()` calls in
 #'   `.triangulate_one` at `R/triangulate.R:495` and `R/triangulate.R:497`.
 #' @return A named list with the four elements above.
-#' @seealso [agreement_pairwise()], [agreement_status()],
-#'   `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier).
+#' @seealso [agreement_pairwise()], [agreement_status()].
 #' @export
 #' @examples
 #' agreement_thresholds()
@@ -239,8 +240,8 @@ agreement_thresholds <- function(
 #' The reference SD is the larger of the two posterior SDs, which is the scale
 #' the hub uses (`.triangulate_verdicts`, `flexyBayes` 0.10.0
 #' `R/triangulate.R:809`: `s_ref <- max(metrics$sd_a[[i]], metrics$sd_b[[i]],
-#' na.rm = TRUE)`), and it is the default here so that a quorum comparison and
-#' a hub triangulation of the same draws return the same numbers. `sd_ref`
+#' na.rm = TRUE)`), and it is the default here so that a quorum comparison
+#' returns the same numbers the hub's comparison returned on the same draws. `sd_ref`
 #' offers the pooled and the one-sided scales for callers who want the
 #' comparison read against a fixed lens instead, at the cost of leaving the
 #' hub's scale.

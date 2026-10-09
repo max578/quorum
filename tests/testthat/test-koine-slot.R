@@ -271,20 +271,18 @@ test_that("emit_koine() still abstains beyond koine's two-grouping corner", {
 # ---------------------------------------------------------------- #
 # (8) the outer wrapper is itself dispatchable as an orchestra      #
 #     decline when koine abstained inside it (fleet refusal-contract #
-#     closeout, ORCHESTRA_dev integration/refusal_contract.R)       #
+#     closeout)                                                     #
 # ---------------------------------------------------------------- #
 
-# ORCHESTRA_dev's fleet gate (integration/test_refusal_contract.R) calls
+# The orchestra's refusal-contract gate calls
 # emit_koine() on a 3-random-term fb_terms and feeds the RETURNED object --
 # what a caller actually holds -- to a producer-agnostic predicate that
 # recognises a class ending in `_refusal` / `_abstention`, or the explicit
-# `orchestra_refusal` marker (integration/refusal_contract.R:99,
-# `is_orchestra_decline()`). Before this fix `emit_koine()`'s abstained exit
+# `orchestra_refusal` marker (`is_orchestra_decline()`). Before this fix `emit_koine()`'s abstained exit
 # always returned class `c("flexybayes_koine", "list")` -- the fact that
 # `fk$koine` is itself a real, correctly-typed `koine_abstention` was invisible
 # to that predicate because it only inspects the OUTER class. Re-implemented
-# here (not imported from ORCHESTRA_dev) so this package's own test suite does
-# not depend on a workspace outside it.
+# here so this package's own test suite does not depend on code outside it.
 .is_orchestra_decline <- function(x) {
   cls <- class(x)
   any(cls == "orchestra_refusal") || any(grepl("_(refusal|abstention)$", cls))

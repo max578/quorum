@@ -37,10 +37,9 @@
 
 # Prepend the fleet-recognised decline stamp to an outer `flexybayes_koine`
 # wrapper's class vector, idempotently. The orchestra's cross-member
-# refusal/abstention contract (ORCHESTRA_dev's `integration/refusal_contract.R`
-# -- `is_orchestra_decline()`) is producer-agnostic: it recognises any class
-# ending in `_refusal` / `_abstention`, or the explicit `orchestra_refusal`
-# marker, but it only ever inspects the OUTER object a caller actually holds.
+# refusal/abstention contract (`is_orchestra_decline()`) is
+# producer-agnostic: it recognises any class ending in `_refusal` /
+# `_abstention`, or the explicit `orchestra_refusal` marker, but it only ever inspects the OUTER object a caller actually holds.
 # `emit_koine()`'s abstained exit already carries a real, correctly-typed
 # nested `koine_abstention` at `$koine` -- koine's own typed decline -- but
 # the outer wrapper itself was always plain `c("flexybayes_koine", "list")`,
@@ -78,13 +77,14 @@
 
 # ---- the headline verb: emit the koine fourth opinion -----------------------
 
-#' Emit a koine fourth-opinion fit for triangulation
+#' Emit a koine fourth-opinion fit
 #'
 #' Activates the koine lens-axis backend from the companion. Given a flexyBayes
 #' `fb_terms` intermediate representation (the `$fb` element of any core fit) and
 #' the model frame, `emit_koine()` synthesises koine's fourth opinion and returns
-#' a `flexybayes_koine` object that `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier) consumes
-#' alongside an engine-axis fit (greta / INLA / brms / gretaR).
+#' a `flexybayes_koine` object. [lens_from_fit()] turns it into a lens that
+#' [agreement_pairwise()] and [quorum()] compare with an engine-axis fit
+#' (greta / INLA / brms / gretaR).
 #'
 #' koine's corner is a population GLM for the gaussian, binomial, and poisson
 #' families, with either a single random intercept `(1 | g)` or -- from koine
@@ -103,7 +103,7 @@
 #' Activation is gated by [koine_status()]: koine installed at or above
 #' `0.2.0` and `options(quorum.koine_activated = TRUE)` (the
 #' default). The draws are canonicalised to flexyBayes's parameter tokens, so the
-#' fit is self-naming and needs no `name_map` at the triangulate seam: the group
+#' fit is self-naming and needs no `name_map` when it is compared: the group
 #' SDs koine reports as `tau` / `tau_<grouping>` become `sd_<grouping>`.
 #'
 #' @param fb An `fb_terms` object (the `$fb` element of a core flexyBayes fit).
@@ -137,8 +137,8 @@
 #'   object without inspecting `$koine`; `inherits(x, "flexybayes_koine")` and
 #'   every `*.flexybayes_koine` method still dispatch unchanged.
 #'
-#' @seealso [koine_status()] for the activation state; `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier)
-#'   for the consumption seam.
+#' @seealso [koine_status()] for the activation state; [lens_from_fit()] and
+#'   [agreement_pairwise()] for comparing the result with another fit.
 #' @export
 emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
                        the_call = NULL, standardise = TRUE, ...) {
@@ -343,13 +343,13 @@ emit_koine <- function(fb, data, n_samples = 4000L, seed = 1L,
   draws
 }
 
-# ---- triangulate-seam S3 methods on flexyBayes core generics ----------------
+# ---- S3 methods on flexyBayes core generics ----------------------------------
 
-#' Extract simple draws from a koine fit (triangulate seam)
+#' Extract simple draws from a koine fit
 #'
 #' S3 method on flexyBayes's exported `fb_as_draws_simple()` generic. Returns a
 #' named list of numeric draw vectors over the canonical parameters, the shape
-#' `flexyBayes::triangulate()` (flexyBayes 0.13 and earlier) aligns on.
+#' [lens_from_fit()] reads.
 #'
 #' @param fit A `flexybayes_koine` object.
 #' @param n_samples Unused (koine draws are pre-synthesised); kept for generic
@@ -375,7 +375,7 @@ fb_as_draws_simple.flexybayes_koine <- function(fit, n_samples = 1000L, ...) {
 #'
 #' S3 method on flexyBayes's exported `canonical_names()` generic. koine is
 #' self-naming -- `emit_koine()` canonicalises the draws -- so no relabel map is
-#' needed; triangulate aligns on the already-canonical names.
+#' needed; a comparison aligns on the already-canonical names.
 #'
 #' @param fit A `flexybayes_koine` object.
 #' @param drop Unused; kept for generic signature compatibility.

@@ -114,7 +114,7 @@ register_pesto_surrogates <- function() {
 
 # Mint the typed out-of-support abstention. The class ends in `_abstention`, so
 # the constellation's shared decline predicate
-# (ORCHESTRA_dev/integration/refusal_contract.R, `is_orchestra_decline()`)
+# (`is_orchestra_decline()`)
 # recognises it without depending on this package's namespace.
 .cme_out_of_support <- function(rows, mass, floor_value, design_range) {
   n_bad <- length(rows)

@@ -22,14 +22,13 @@ names are the genotype levels and must cover the genotypes in \code{data}.}
 A genomic lens: \code{list(h2, var_g, var_e, gebv, label)}, where
 \code{h2} / \code{var_g} / \code{var_e} are \code{list(estimate, se)} (the heritability SE
 is a delta-method approximation) and \code{gebv} is a named numeric vector
-of REML breeding values. Pass it as either argument of
-\code{flexyBayes::triangulate_genomic()} (flexyBayes 0.13 and earlier).
+of REML breeding values.
 }
 \description{
 Fit the established REML genomic BLUP with \pkg{sommer} on the same data
-and return a genomic \emph{lens} for \code{flexyBayes::triangulate_genomic()} (flexyBayes 0.13 and earlier) --
-the field-standard fourth opinion the Bayesian multi-backend answer is
-cross-checked against. The lens carries the REML heritability, variance
+and return a genomic \emph{lens}: the field-standard fourth opinion to set
+beside the Bayesian multi-backend answer. (\code{triangulate_genomic()}, which
+compared the two, was removed from flexyBayes in version 0.14.0.) The lens carries the REML heritability, variance
 components (with standard errors), and breeding values (named by
 genotype, aligning to the flexyBayes GEBVs), so divergence between the
 Bayesian and REML answers is surfaced rather than hidden.
@@ -41,6 +40,7 @@ bayes_fit <- flexyBayes::flexybayes(
   known_matrices = list(G = G), backend = "greta"
 )
 koine <- koine_genomic_lens(y ~ 1, dat, G, geno = "geno")
-flexyBayes::triangulate_genomic(bayes_fit, koine)
+koine$h2
+head(koine$gebv)
 }
 }

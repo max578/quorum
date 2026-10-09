@@ -1,32 +1,9 @@
-# quorum (development version)
-
-## The quorum -> decideR seam
-
-* **A concordant verdict now carries the carried lens's posterior into its
-  manifest**, in `outputs`, hashed with the contributions table and the summary.
-  Before this the lenses' draws were discarded once agreement had been computed,
-  so a consensus manifest left the package with nothing a decision layer could
-  read: `decideR::decide_from_manifest()` found no draws and failed on the shape.
-  The seam between the orchestra's consensus layer and its decision layer was
-  open, on the exact target the consensus layer exists to produce.
-
-* **A verdict that issued no number carries no draws.** Only a `concordant`
-  status over a single resolved cell releases the posterior. A `no_quorum`,
-  `discordant` or `not_computed` verdict emits `outputs = NULL`, so nothing
-  downstream can price a number the quorum declined to issue.
-
-* The draws are read through the lens object's own property rather than coerced.
-  `quorum_draws` holds a named list of numeric vectors for the `parameters`
-  kind, and coercing the object directly would have produced a one-column
-  list-matrix without failing, which is the quiet kind of wrong.
-
 # quorum 0.1.0
 
 * **Renamed from `flexyBayesOrchestra` and re-dedicated as the orchestra's
-  consensus layer** (plan `ORCHESTRA_dev/plan/quorum_v0.1.md`, approved
-  2026-09-02). quorum compares lenses and never fits a model of its own: every
-  lens is a member's fitter behind an adapter with declared independence,
-  expressiveness and scope. A quorum of independent lenses must agree before an
+  consensus layer** (plan approved 2026-09-02). quorum compares lenses and
+  never fits a model of its own: every lens is a member's fitter behind an
+  adapter with declared independence, expressiveness and scope. A quorum of independent lenses must agree before an
   answer is carried; no quorum means abstain. The previous capabilities stay as
   the on-ramps by which non-hub estimates become lenses (ensemble ingestion,
   surrogates, the koine backend); their function names are unchanged.
@@ -72,7 +49,33 @@
   the shipped fixture: 200 decision cells resolve to the recorded tiers and
   rates, mechanism carrying 150, statistical 48 and the status quo 2.
 
-## Carried from flexyBayesOrchestra (development version)
+## The quorum -> decideR seam
+
+* **A concordant verdict now carries the carried lens's posterior into its
+  manifest**, in `outputs`, hashed with the contributions table and the summary.
+  Before this the lenses' draws were discarded once agreement had been computed,
+  so a consensus manifest left the package with nothing a decision layer could
+  read: `decideR::decide_from_manifest()` found no draws and failed on the shape.
+  The seam between the orchestra's consensus layer and its decision layer was
+  open, on the exact target the consensus layer exists to produce.
+
+* **A verdict that issued no number carries no draws.** Only a `concordant`
+  status over a single resolved cell releases the posterior. A `no_quorum`,
+  `discordant` or `not_computed` verdict emits `outputs = NULL`, so nothing
+  downstream can price a number the quorum declined to issue.
+
+* The draws are read through the lens object's own property rather than coerced.
+  `quorum_draws` holds a named list of numeric vectors for the `parameters`
+  kind, and coercing the object directly would have produced a one-column
+  list-matrix without failing, which is the quiet kind of wrong.
+
+## Documentation
+
+* Help pages no longer point to the `triangulate()` functions removed from
+  flexyBayes in 0.14.0; `emit_koine()` now names `lens_from_fit()` and
+  `agreement_pairwise()` as the way to compare a koine fit with another fit.
+
+## Carried from flexyBayesOrchestra
 
 * Relicensed from GPL (>= 3) to MIT (orchestra-wide licence unification, 2026-09-02). No code change.
 
@@ -80,7 +83,7 @@
   dispatchable orchestra decline.** The returned `flexybayes_koine` object
   already carried a real, correctly-typed nested `koine_abstention` at
   `$koine` whenever koine's corner or convergence gate declined a model, but
-  the OUTER object -- what a caller (and ORCHESTRA_dev's fleet refusal-contract
+  the OUTER object -- what a caller (and the orchestra's refusal-contract
   gate, `is_orchestra_decline()`) actually holds -- was always plain
   `c("flexybayes_koine", "list")`, invisible to any predicate keyed on a
   `_refusal` / `_abstention` class suffix or the `orchestra_refusal` marker.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/emit_koine.R
 \name{emit_koine}
 \alias{emit_koine}
-\title{Emit a koine fourth-opinion fit for triangulation}
+\title{Emit a koine fourth-opinion fit}
 \usage{
 emit_koine(
   fb,
@@ -57,8 +57,9 @@ every \verb{*.flexybayes_koine} method still dispatch unchanged.
 Activates the koine lens-axis backend from the companion. Given a flexyBayes
 \code{fb_terms} intermediate representation (the \verb{$fb} element of any core fit) and
 the model frame, \code{emit_koine()} synthesises koine's fourth opinion and returns
-a \code{flexybayes_koine} object that \code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier) consumes
-alongside an engine-axis fit (greta / INLA / brms / gretaR).
+a \code{flexybayes_koine} object. \code{\link[=lens_from_fit]{lens_from_fit()}} turns it into a lens that
+\code{\link[=agreement_pairwise]{agreement_pairwise()}} and \code{\link[=quorum]{quorum()}} compare with an engine-axis fit
+(greta / INLA / brms / gretaR).
 }
 \details{
 koine's corner is a population GLM for the gaussian, binomial, and poisson
@@ -78,10 +79,10 @@ the orthogonal lens axis, never a pool across the engine-axis backends.
 Activation is gated by \code{\link[=koine_status]{koine_status()}}: koine installed at or above
 \verb{0.2.0} and \code{options(quorum.koine_activated = TRUE)} (the
 default). The draws are canonicalised to flexyBayes's parameter tokens, so the
-fit is self-naming and needs no \code{name_map} at the triangulate seam: the group
+fit is self-naming and needs no \code{name_map} when it is compared: the group
 SDs koine reports as \code{tau} / \verb{tau_<grouping>} become \verb{sd_<grouping>}.
 }
 \seealso{
-\code{\link[=koine_status]{koine_status()}} for the activation state; \code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier)
-for the consumption seam.
+\code{\link[=koine_status]{koine_status()}} for the activation state; \code{\link[=lens_from_fit]{lens_from_fit()}} and
+\code{\link[=agreement_pairwise]{agreement_pairwise()}} for comparing the result with another fit.
 }

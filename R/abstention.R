@@ -2,7 +2,7 @@
 #
 # Every refusal quorum issues is a classed object carrying the
 # `quorum_abstention` and `orchestra_refusal` markers so the fleet predicate
-# (ORCHESTRA_dev `is_orchestra_decline()`) dispatches on it, and `abstained`,
+# (`is_orchestra_decline()`) dispatches on it, and `abstained`,
 # `reason`, `scope` and `detail` fields a caller can read without parsing text.
 
 #' Construct a typed quorum abstention

@@ -10,7 +10,7 @@
 # `koine_genomic_lens()` runs the established REML genomic BLUP (via
 # sommer) on the same data and emits the genomic *lens*
 # `list(h2, var_g, var_e, gebv, label)` that
-# `flexyBayes::triangulate_genomic()` consumes as a fourth column. The lens
+# flexyBayes's former `triangulate_genomic()` consumed as a fourth column. The lens
 # contract keeps flexyBayes core lean -- core never depends on sommer; the
 # companion produces the lens and core compares it. sommer / the field
 # tools stay in Suggests (oracle / cross-check only, never on the fit
@@ -23,9 +23,9 @@
 #' Koine genomic fourth opinion (REML lens via sommer)
 #'
 #' Fit the established REML genomic BLUP with \pkg{sommer} on the same data
-#' and return a genomic *lens* for `flexyBayes::triangulate_genomic()` (flexyBayes 0.13 and earlier) --
-#' the field-standard fourth opinion the Bayesian multi-backend answer is
-#' cross-checked against. The lens carries the REML heritability, variance
+#' and return a genomic *lens*: the field-standard fourth opinion to set
+#' beside the Bayesian multi-backend answer. (`triangulate_genomic()`, which
+#' compared the two, was removed from flexyBayes in version 0.14.0.) The lens carries the REML heritability, variance
 #' components (with standard errors), and breeding values (named by
 #' genotype, aligning to the flexyBayes GEBVs), so divergence between the
 #' Bayesian and REML answers is surfaced rather than hidden.
@@ -41,8 +41,7 @@
 #' @return A genomic lens: `list(h2, var_g, var_e, gebv, label)`, where
 #'   `h2` / `var_g` / `var_e` are `list(estimate, se)` (the heritability SE
 #'   is a delta-method approximation) and `gebv` is a named numeric vector
-#'   of REML breeding values. Pass it as either argument of
-#'   `flexyBayes::triangulate_genomic()` (flexyBayes 0.13 and earlier).
+#'   of REML breeding values.
 #'
 #' @examples
 #' \dontrun{
@@ -51,7 +50,8 @@
 #'   known_matrices = list(G = G), backend = "greta"
 #' )
 #' koine <- koine_genomic_lens(y ~ 1, dat, G, geno = "geno")
-#' flexyBayes::triangulate_genomic(bayes_fit, koine)
+#' koine$h2
+#' head(koine$gebv)
 #' }
 #' @export
 koine_genomic_lens <- function(fixed, data, K, geno = "geno") {

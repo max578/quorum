@@ -1,38 +1,52 @@
+# Standard R CMD check (r-lib/actions v2). Linux only: several Suggests
+# (INLA, rstan, tmbstan) are slow or unavailable on the other runners.
 on:
   push:
     branches: [main, master]
   pull_request:
+    branches: [main, master]
 
 name: R-CMD-check
+
+permissions: read-all
 
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
+
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
     strategy:
       fail-fast: false
       matrix:
         config:
-        # macOS (10x) and Windows (2x) runners are billed at multiples on a private
-        # repository and exhausted the account's monthly minutes on 2026-08-25;
-        # Linux-only until the repository is public or a release tag re-enables them.
-          - {os: ubuntu-latest, r: release}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'oldrel-1'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      _R_CHECK_FORCE_SUGGESTS_: false
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
           needs: check
-      # OPT-IN — uncomment when DESCRIPTION imports sf / terra / stars / gdalcubes.
-      # See rubrics/audit_punchlist.md, "macOS PROJ env exported in R-CMD-check.yaml
-      # for sf / terra / stars / gdalcubes packages" (v0.4.6 — nert PR #31).
-      # - name: Configure PROJ on macOS
-      #   if: runner.os == 'macOS'
-      #   run: |
-      #     brew install proj
-      #     echo "PROJ_LIB=$(brew --prefix proj)/share/proj" >> "$GITHUB_ENV"
-      #     echo "PROJ_DATA=$(brew --prefix proj)/share/proj" >> "$GITHUB_ENV"
+          extra-repositories: 'https://max578.r-universe.dev https://inla.r-inla-download.org/R/stable'
+
       - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'

@@ -20,5 +20,5 @@ A list with an empty \code{map}, empty \code{transform}, and
 \description{
 S3 method on flexyBayes's exported \code{canonical_names()} generic. koine is
 self-naming -- \code{emit_koine()} canonicalises the draws -- so no relabel map is
-needed; triangulate aligns on the already-canonical names.
+needed; a comparison aligns on the already-canonical names.
 }

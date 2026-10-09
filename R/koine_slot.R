@@ -102,8 +102,9 @@
       "set it FALSE to hold the slot dormant."
     ),
     paste0(
-      "Emit the fourth opinion with emit_koine(fit$fb, data) on a core fit and ",
-      "pass it to flexyBayes::triangulate(engine_fit, koine_fit)."
+      "Emit the fourth opinion with emit_koine(fit$fb, data) on a core fit, ",
+      "wrap it and the engine fit with lens_from_fit(), and compare them with ",
+      "agreement_pairwise()."
     )
   )
 }

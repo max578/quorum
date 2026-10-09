@@ -2,7 +2,7 @@
 % Please edit documentation in R/emit_koine.R
 \name{fb_as_draws_simple.flexybayes_koine}
 \alias{fb_as_draws_simple.flexybayes_koine}
-\title{Extract simple draws from a koine fit (triangulate seam)}
+\title{Extract simple draws from a koine fit}
 \usage{
 \method{fb_as_draws_simple}{flexybayes_koine}(fit, n_samples = 1000L, ...)
 }
@@ -20,5 +20,5 @@ A named list of numeric vectors, one per canonical parameter.
 \description{
 S3 method on flexyBayes's exported \code{fb_as_draws_simple()} generic. Returns a
 named list of numeric draw vectors over the canonical parameters, the shape
-\code{flexyBayes::triangulate()} (flexyBayes 0.13 and earlier) aligns on.
+\code{\link[=lens_from_fit]{lens_from_fit()}} reads.
 }

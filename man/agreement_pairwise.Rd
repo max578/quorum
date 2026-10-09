@@ -45,8 +45,8 @@ units, and the verdict those three scaled quantities imply.
 \details{
 The reference SD is the larger of the two posterior SDs, which is the scale
 the hub uses (\code{.triangulate_verdicts}, \code{flexyBayes} 0.10.0
-\code{R/triangulate.R:809}: \code{s_ref <- max(metrics$sd_a[[i]], metrics$sd_b[[i]], na.rm = TRUE)}), and it is the default here so that a quorum comparison and
-a hub triangulation of the same draws return the same numbers. \code{sd_ref}
+\code{R/triangulate.R:809}: \code{s_ref <- max(metrics$sd_a[[i]], metrics$sd_b[[i]], na.rm = TRUE)}), and it is the default here so that a quorum comparison
+returns the same numbers the hub's comparison returned on the same draws. \code{sd_ref}
 offers the pooled and the one-sided scales for callers who want the
 comparison read against a fixed lens instead, at the cost of leaving the
 hub's scale.
