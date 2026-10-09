@@ -1,7 +1,5 @@
-# koine_genomic_lens() -- the field-standard REML fourth opinion for
-# genomics. The lens shape + recovery are checked with sommer; the
-# triangulation against a flexyBayes Bayesian answer is gated on flexyBayes
-# carrying triangulate_genomic() (>= 0.8.0).
+# koine_genomic_lens() -- the REML fourth opinion for genomics. The lens
+# shape and parameter recovery are checked against sommer.
 
 # Founder-related genotypes so REML breeding values are well identified.
 .koine_gen_sim <- function(n_geno = 60L, n_markers = 400L, n_founders = 10L,
@@ -65,34 +63,4 @@ test_that("koine_genomic_lens() validates its inputs", {
     koine_genomic_lens(y ~ 1, sim$data, sim$K, geno = "nope"),
     "no column"
   )
-})
-
-test_that("the koine REML lens triangulates against a Bayesian lens", {
-  skip_if_not_installed("sommer")
-  skip_if_not_installed("flexyBayes")
-  skip_if(
-    utils::packageVersion("flexyBayes") < "0.8.0",
-    "flexyBayes >= 0.8.0 (triangulate_genomic) not installed"
-  )
-  sim <- .koine_gen_sim(seed = 4L)
-  koine <- koine_genomic_lens(y ~ 1, sim$data, sim$K, geno = "geno")
-
-  # A stand-in Bayesian lens that broadly agrees (same data scale).
-  set.seed(5L)
-  bayes <- list(
-    h2 = stats::rnorm(1000L, koine$h2$estimate, 0.05),
-    var_g = stats::rnorm(1000L, koine$var_g$estimate, 0.2),
-    var_e = stats::rnorm(1000L, koine$var_e$estimate, 0.1),
-    gebv = koine$gebv + stats::rnorm(length(koine$gebv), 0, 0.1),
-    label = "bayes"
-  )
-  skip_if_not(
-    "triangulate_genomic" %in% getNamespaceExports("flexyBayes"),
-    "flexyBayes 0.14.0 removed triangulate_genomic()"
-  )
-  tg <- flexyBayes::triangulate_genomic(bayes, koine)
-  h2_row <- tg$components[tg$components$quantity == "heritability", ]
-  expect_true(h2_row$intervals_overlap)
-  expect_gt(tg$gebv$pearson, 0.9)
-  expect_equal(tg$label_b, "koine(sommer REML)")
 })

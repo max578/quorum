@@ -11,7 +11,7 @@
 #
 # ---- which oracle route, and why -------------------------------------------
 #
-# The brief allowed two routes to identical draws: (i) recover the draws the
+# Two routes to identical draws were considered: (i) recover the draws the
 # hub used from its result object, or (ii) reproduce the hub's extraction
 # under the same seed. The result object carries no draws (its fields are
 # metrics, status, status_reasons, comparability, diagnostics, common, only_a,
@@ -398,9 +398,13 @@ test_that("agreement_matrix() accepts quorum_draws lenses", {
 test_that("oracle S3a: quorum equals the hub on identical fixture draws", {
   skip_if_not_installed("flexyBayes")
 
+  # flexyBayes does not export triangulate(), so there is no hub output to
+  # diff against. The .wasserstein1_1d() closed-form tests above cover the
+  # arithmetic in agreement_pairwise(). This test stays skipped until a
+  # recorded hub fixture exists.
   skip_if_not(
     "triangulate" %in% getNamespaceExports("flexyBayes"),
-    "flexyBayes 0.14.0 removed triangulate()"
+    "flexyBayes does not export triangulate()"
   )
   fx <- agreement_fixture()
   fit_a <- structure(list(draws = fx$a), class = "quorum_oracle_fit")
@@ -456,6 +460,12 @@ test_that("oracle S3b: quorum equals the hub on two gated brms fits", {
   skip_on_cran()
   skip_if_not_installed("flexyBayes")
   skip_if_not_installed("brms")
+  # flexyBayes does not export triangulate(), so the two brms fits below
+  # have no hub output to diff against.
+  skip_if_not(
+    "triangulate" %in% getNamespaceExports("flexyBayes"),
+    "flexyBayes does not export triangulate()"
+  )
   withr::local_options(list(flexyBayes.silence_default_prior_note = TRUE))
 
   set.seed(4L)

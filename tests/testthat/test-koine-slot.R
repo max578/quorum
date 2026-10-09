@@ -2,14 +2,12 @@
 # test-koine-slot.R -- the koine fourth-opinion backend (R/koine_slot.R +
 # R/emit_koine.R).
 #
-# koine is the synthesised fourth opinion on the orthogonal lens axis. The
-# 0.7.0 lean-core split moved it out of flexyBayes core to this companion;
-# activation (2026-06-08) ports koine's real emit + registers S3 methods on
-# core's exported `fb_as_draws_simple` / `canonical_names` generics, so core's
-# generic `triangulate()` consumes a `flexybayes_koine` fit as its fourth
-# column with no core edit. These tests pin: the activated status shape, the
-# option-gated dormancy fallback, a contributed emit on koine's (1 | g) corner,
-# an honest abstention out of corner, and the triangulate seam.
+# koine is the fourth opinion on the orthogonal lens axis. The S3 methods for
+# flexyBayes's exported `fb_as_draws_simple` and `canonical_names` generics
+# are registered by this package, so a `flexybayes_koine` fit is consumed
+# through those generics. These tests cover the status shape, the
+# option-gated dormancy fallback, a contributed emit on koine's (1 | g)
+# corner, the abstention outside that corner, and the generics seam.
 # =============================================================================
 
 # ---------------------------------------------------------------- #
@@ -99,7 +97,7 @@ test_that("emit_koine() contributes a self-naming opinion on the (1|g) corner", 
 
 
 # ---------------------------------------------------------------- #
-# (4) emit_koine() abstains honestly outside the corner             #
+# (4) emit_koine() abstains outside the corner                      #
 # ---------------------------------------------------------------- #
 
 test_that("emit_koine() abstains on a random slope (out of corner)", {
@@ -116,25 +114,30 @@ test_that("emit_koine() abstains on a random slope (out of corner)", {
 
 
 # ---------------------------------------------------------------- #
-# (5) triangulate() consumes the koine fourth opinion (the seam)    #
+# (5) lens_from_fit() and agreement_pairwise() accept koine fits    #
+#     through the generics                                         #
 # ---------------------------------------------------------------- #
 
-test_that("flexyBayes::triangulate() aligns on a koine fit via the generics", {
+test_that("lens_from_fit() aligns two koine fits via the generics", {
   skip_if_not_installed("koine")
   skip_if_not_installed("posterior")
-  skip_if_not_installed("flexyBayes")
   d <- .koine_test_data()
   fb <- .koine_test_fb()
   ka <- emit_koine(fb, d, n_samples = 800L, seed = 4L)
   kb <- emit_koine(fb, d, n_samples = 800L, seed = 5L)
   skip_if(ka$status != "contributed" || kb$status != "contributed")
-  skip_if_not(
-    "triangulate" %in% getNamespaceExports("flexyBayes"),
-    "flexyBayes 0.14.0 removed triangulate()"
+
+  la <- lens_from_fit(ka)
+  lb <- lens_from_fit(kb)
+  expect_false(is_quorum_abstention(la))
+  expect_false(is_quorum_abstention(lb))
+
+  tbl <- agreement_pairwise(
+    S7::prop(S7::prop(la, "fit")(NULL, NULL), "draws"),
+    S7::prop(S7::prop(lb, "fit")(NULL, NULL), "draws")
   )
-  tri <- flexyBayes::triangulate(ka, kb, n_samples = 500L)
-  expect_true(is.list(tri))
-  expect_true(!is.null(tri$n_common) && tri$n_common >= 2L)
+  expect_s3_class(tbl, "data.frame")
+  expect_gte(nrow(tbl), 2L)
 })
 
 
