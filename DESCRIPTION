@@ -1,6 +1,6 @@
 Package: quorum
 Title: The Orchestra's Consensus Layer: Lenses in, a Typed Verdict Out
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R:
     person("Max", "Moldovan", email = "max.moldovan@gmail.com",
            role = c("aut", "cre"),

@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Edit the .Rmd, not the .md. -->
 
-# quorum
+# quorum <img src="man/figures/logo.png" align="right" height="139" alt="quorum logo" />
 
 `quorum` is the Crop Analytics Orchestra’s consensus layer. It never
 fits a model of its own: every estimate reaches it as a *lens* – a
@@ -17,6 +17,23 @@ backend.
 
 > **Rule in one line.** A quorum of independent lenses must agree before
 > an answer is carried; no quorum means abstain.
+
+## Related packages
+
+- [MuMIn](https://CRAN.R-project.org/package=MuMIn) selects and averages
+  models, weighting their parameters and predictions by information
+  criteria or custom weights.
+- [loo](https://CRAN.R-project.org/package=loo) compares Bayesian models
+  by approximate leave-one-out cross-validation and can average their
+  predictive distributions by stacking.
+- [metafor](https://CRAN.R-project.org/package=metafor) pools effect
+  sizes from several studies with fixed-, random- and mixed-effects
+  meta-analysis models.
+
+These combine estimates into one weighted answer. quorum instead asks
+whether enough independent estimates of the same quantity agree, after
+declaring what each one shares with the others, and abstains when they
+do not.
 
 ## Installation
 
@@ -76,9 +93,9 @@ through a TMB adapter.
 
 ## Contributing
 
-Bug reports and suggestions are welcome through the
-[issue tracker](https://github.com/max578/quorum/issues). See
-`CONTRIBUTING.md` for how to propose a change.
+Bug reports and suggestions are welcome through the [issue
+tracker](https://github.com/max578/quorum/issues). See `CONTRIBUTING.md`
+for how to propose a change.
 
 ## Citation
 

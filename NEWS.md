@@ -1,3 +1,10 @@
+# quorum (development version)
+
+* The package has a logo.
+* README lists related packages.
+* CI runs lintr (report-only) and test coverage.
+* `CITATION.cff` states the package's current version.
+
 # quorum 0.1.0
 
 * **Renamed from `flexyBayesOrchestra` and re-dedicated as the orchestra's

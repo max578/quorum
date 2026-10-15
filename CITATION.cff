@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 title: "quorum: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors"
-version: 0.0.0.9000
+version: 0.1.0.9000
 date-released: 2026-06-06
 url: "https://github.com/max578/quorum"
 repository-code: "https://github.com/max578/quorum"
