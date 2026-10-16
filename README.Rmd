@@ -13,6 +13,13 @@ knitr::opts_chunk$set(
 
 # quorum <img src="man/figures/logo.png" align="right" height="139" alt="quorum logo" />
 
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![R-CMD-check](https://github.com/max578/quorum/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/max578/quorum/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/max578/quorum/graph/badge.svg)](https://app.codecov.io/gh/max578/quorum)
+[![pkgdown](https://github.com/max578/quorum/actions/workflows/pkgdown.yaml/badge.svg)](https://max578.github.io/quorum/)
+<!-- badges: end -->
+
 `quorum` is the Crop Analytics Orchestra's consensus layer. It never fits a
 model of its own: every estimate reaches it as a *lens* -- a member's fitter
 behind an adapter that declares what it shares with the other lenses
