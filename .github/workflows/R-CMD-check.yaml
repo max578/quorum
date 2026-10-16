@@ -39,12 +39,12 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+          extra-repositories: 'https://max578.r-universe.dev https://inla.r-inla-download.org/R/stable'
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
           needs: check
-          extra-repositories: 'https://max578.r-universe.dev https://inla.r-inla-download.org/R/stable'
 
       - uses: r-lib/actions/check-r-package@v2
         with:
