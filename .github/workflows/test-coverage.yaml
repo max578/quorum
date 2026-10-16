@@ -51,7 +51,7 @@ jobs:
           cat(sprintf("quorum TOTAL COVERAGE: %.2f%%\n", covr::percent_coverage(cov)))
         shell: Rscript {0}
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v7
         with:
           # An upload problem (for example no token) does not fail the job.
           fail_ci_if_error: false
