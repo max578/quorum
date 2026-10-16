@@ -229,13 +229,13 @@ knitr::kable(
 
 ### A figure: the constraint that moves the cascade
 
-Every recorded cell also carries `constrained`, TACI's flag for whether the
+Every recorded cell also carries `constrained`, Study A0's flag for whether the
 mechanism model's response at that site-season hides a constraint the field
 data alone would not reveal. The figure below reads carried lens against that
 flag directly from `res_a0` and `tab_a0$constrained`; it shows something the
 tables above do not, because neither cross-tab conditions on the flag.
 
-```{r fig-cascade-by-constraint, echo = requireNamespace("ggplot2", quietly = TRUE), eval = requireNamespace("ggplot2", quietly = TRUE), fig.cap = "Carried lens by decision cell, split by whether TACI recorded a hidden constraint at that site-season. Constrained cells fall back to the statistical lens far more often than unconstrained ones."}
+```{r fig-cascade-by-constraint, echo = requireNamespace("ggplot2", quietly = TRUE), eval = requireNamespace("ggplot2", quietly = TRUE), fig.cap = "Carried lens by decision cell, split by whether Study A0 recorded a hidden constraint at that site-season. Constrained cells fall back to the statistical lens far more often than unconstrained ones."}
 plot_df <- data.frame(
   constrained = ifelse(tab_a0$constrained, "constrained", "unconstrained"),
   carried_lens = res_a0$carried_lens,

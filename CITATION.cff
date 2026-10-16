@@ -1,12 +1,12 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "quorum: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors"
+title: "quorum: The Orchestra's Consensus Layer: Lenses in, a Typed Verdict Out"
 version: 0.1.0.9000
 date-released: 2026-06-06
 url: "https://github.com/max578/quorum"
 repository-code: "https://github.com/max578/quorum"
-license: GPL-3.0-or-later
+license: MIT
 authors:
   - family-names: Moldovan
     given-names: Max
@@ -14,7 +14,7 @@ authors:
     orcid: "https://orcid.org/0000-0001-9680-8474"
 preferred-citation:
   type: software
-  title: "quorum: Constellation Glue for 'flexyBayes': Surrogates, Ensembles and Derived Priors"
+  title: "quorum: The Orchestra's Consensus Layer: Lenses in, a Typed Verdict Out"
   authors:
     - family-names: Moldovan
       given-names: Max
