@@ -46,7 +46,7 @@ Suggests:
     testthat (>= 3.0.0),
     withr
 Remotes:
-    AAGI-AUS/flexyBayes,
+    max578/flexyBayes,
     max578/orchestraManifest,
     max578/kernR,
     max578/PESTO,
