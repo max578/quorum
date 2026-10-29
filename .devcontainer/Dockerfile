@@ -1,4 +1,4 @@
-FROM rocker/r-ver:4.6.0
+FROM rocker/r-ver:4.6.1
 
 # System libraries commonly needed by widely-used R packages (sf, terra, cpp11, httr2, ragg).
 RUN apt-get update && apt-get install -y --no-install-recommends \
