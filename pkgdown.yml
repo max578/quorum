@@ -1,0 +1,12 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  adding-a-lens: adding-a-lens.html
+  getting-started: getting-started.html
+  quorum-on-study-a0: quorum-on-study-a0.html
+  surrogate-workflow: surrogate-workflow.html
+last_built: 2026-10-29T04:11Z
+urls:
+  reference: https://max578.github.io/quorum/reference
+  article: https://max578.github.io/quorum/articles
